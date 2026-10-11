@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Devenir professeur — EasySchool{% endblock %}
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur">
+    <h1>Publie tes cours sur EasySchool</h1>
+    <p>Crée ta chaîne, publie tes vidéos et tes PDF et fixe ton prix mensuel. Tu reçois {{ part_prof_pct }} % de chaque abonnement.</p>
+  </div>
+</section>
+<section class="section" style="padding-top:32px">
+  <div class="conteneur deux-colonnes">
+    <div>
+      {% if profil.statut == 'refuse' %}<div class="statut-dossier refuse" role="alert">Ton dossier a été refusé : {{ profil.motif_decision|default:"pièces non conformes" }}. Corrige-le ci-dessous et renvoie-le.</div>{% endif %}
+      {% if profil.statut == 'attente' %}<div class="statut-dossier attente">Ton dossier est en cours de vérification. Tu peux encore le modifier.</div>{% endif %}
+      {% if form.errors or pieces.errors %}<div class="erreurs-form" role="alert">Le dossier n'a pas été envoyé : corrige les champs signalés.</div>{% endif %}
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <fieldset class="bloc">
+          <legend>Ta chaîne</legend>
+          {% with field=form.nom_public %}{% include "profs/_champ.html" %}{% endwith %}
+          {% with field=form.bio %}{% include "profs/_champ.html" %}{% endwith %}
+          <div class="grille-2">
+            {% with field=form.matieres_texte %}{% include "profs/_champ.html" %}{% endwith %}
+            {% with field=form.etablissement %}{% include "profs/_champ.html" %}{% endwith %}
+          </div>
+          <div class="champ{% if form.niveaux.errors %} invalide{% endif %}">
+            <span class="libelle">Classes où tu enseignes</span>
+            <div class="choix-puces">{{ form.niveaux }}</div>
+            {% for e in form.niveaux.errors %}<span class="erreur">{{ e }}</span>{% endfor %}
+          </div>
+          {% with field=form.photo %}{% include "profs/_champ.html" %}{% endwith %}
+          {% with field=form.prix_mensuel %}{% include "profs/_champ.html" %}{% endwith %}
+        </fieldset>
+        <fieldset class="bloc">
+          <legend>Tes paiements</legend>
+          <p class="aide">Tes gains sont versés sur ce numéro, qui doit être à ton nom.</p>
+          <div class="grille-2">
+            {% with field=form.operateur %}{% include "profs/_champ.html" %}{% endwith %}
+            {% with field=form.numero_retrait %}{% include "profs/_champ.html" %}{% endwith %}
+          </div>
+        </fieldset>
+        <fieldset class="bloc">
+          <legend>Vérification d'identité</legend>
+          <p class="aide">Ces documents servent uniquement à vérifier que tu es bien enseignant. Ils ne sont jamais publiés et seule l'équipe EasySchool peut les voir.</p>
+          {% for field in pieces %}
+            <div class="champ{% if field.errors %} invalide{% endif %}">
+              <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.name in deja %} <span class="badge-verifie">déjà fourni</span>{% endif %}</label>
+              {{ field }}
+              {% for e in field.errors %}<span class="erreur">{{ e }}</span>{% endfor %}
+            </div>
+          {% endfor %}
+        </fieldset>
+        <button class="btn btn-encre" type="submit">Envoyer mon dossier</button>
+      </form>
+    </div>
+    <aside class="encadre">
+      <h3>Comment ça marche</h3>
+      <ol class="etapes-simples" style="padding-left:1.2em;display:grid;gap:10px;margin:0">
+        <li>Tu envoies ton dossier : profil, numéro Mobile Money et pièces d'identité.</li>
+        <li>L'équipe vérifie ton identité sous 48 h. En attendant, tu peux préparer tes cours.</li>
+        <li>Une fois vérifié, tes cours publiés apparaissent sur le site avec le badge « Identité vérifiée ».</li>
+        <li>Chaque abonnement d'un élève te rapporte {{ part_prof_pct }} % du prix. Le montant devient retirable après 7 jours.</li>
+        <li>Tu demandes un retrait (5 000 F minimum) : il est payé sur ton numéro sous 72 h.</li>
+      </ol>
+    </aside>
+  </div>
+</section>
+{% endblock %}

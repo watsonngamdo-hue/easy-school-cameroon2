@@ -1,0 +1,68 @@
+{% if page_obj %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Matière</th>
+                <th>École</th>
+                <th>Année</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for epreuve in page_obj %}
+            <tr>
+                <td>{{ epreuve.titre }}</td>
+                <td>{{ epreuve.matiere.nom|default:"-" }}</td>
+                <td>
+                    {% if epreuve.ecole.logo %}
+                    <img src="{{ epreuve.ecole.logo.url }}" alt="{{ epreuve.ecole.nom }}" style="height: 30px; margin-right: 10px;">
+                    {% endif %}
+                    {{ epreuve.ecole.nom }}
+                </td>
+                <td>{{ epreuve.annee|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'programme:detail_ancienne_epreuve' epreuve.pk %}" class="btn btn-sm btn-primary">Voir / Télécharger</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination pagination-sm m-b-0">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Précédent" onclick="return loadPage(event, this.href)">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}" onclick="return loadPage(event, this.href)">{{ num }}</a></li>
+        {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Suivant" onclick="return loadPage(event, this.href)">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    Aucune ancienne épreuve trouvée.
+</div>
+{% endif %}

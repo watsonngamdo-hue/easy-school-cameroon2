@@ -1,0 +1,1985 @@
+{% extends 'dash/base.html' %} {% load static %} {% block content %}
+<script src="{% static 'vendor/anime/anime.min.js' %}"></script>
+<script src="{% static 'vendor/marked/marked.min.js' %}"></script>
+<script src="{% static 'vendor/dompurify/purify.min.js' %}"></script>
+<!-- KaTeX for Math Rendering -->
+<link rel="stylesheet" href="{% static 'vendor/katex/katex.min.css' %}">
+<script src="{% static 'vendor/katex/katex.min.js' %}"></script>
+<script>
+  // Ensure the KaTeX CSS is strongly enforced
+  if (!document.querySelector('link[href*="katex.min.css"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+      document.head.appendChild(link);
+  }
+
+  // Custom Marked Extensions for exactly \( ... \) and \[ ... \]
+  const inlineMath = {
+    name: 'inlineMath',
+    level: 'inline',
+    start(src) { return src.indexOf('\\('); },
+    tokenizer(src, tokens) {
+      const match = /^\\\(([\s\S]+?)\\\)/.exec(src);
+      if (match) {
+        return {
+          type: 'inlineMath',
+          raw: match[0],
+          text: match[1]
+        };
+      }
+    },
+    renderer(token) {
+      try {
+        return katex.renderToString(token.text, { throwOnError: false, output: 'html', displayMode: false });
+      } catch (e) {
+        return `<span class="katex-error">${token.text}</span>`;
+      }
+    }
+  };
+
+  const blockMath = {
+    name: 'blockMath',
+    level: 'block',
+    start(src) { return src.indexOf('\\['); },
+    tokenizer(src, tokens) {
+      const match = /^\\\[([\s\S]+?)\\\]/.exec(src);
+      if (match) {
+        return {
+          type: 'blockMath',
+          raw: match[0],
+          text: match[1]
+        };
+      }
+    },
+    renderer(token) {
+      try {
+        return katex.renderToString(token.text, { throwOnError: false, output: 'html', displayMode: true });
+      } catch (e) {
+        return `<div class="katex-error">${token.text}</div>`;
+      }
+    }
+  };
+  
+  marked.use({ extensions: [inlineMath, blockMath] });
+</script>
+
+<style>
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  /* --- Mini Dashboard Sidebar Control --- */
+  body.mini-nav-active #sidebarLeft {
+    width: 50px !important;
+    overflow: hidden !important;
+    transition: width 0.3s;
+  }
+  body.mini-nav-active {
+    padding-left: 50px !important; /* Override default padding */
+    transition: padding-left 0.3s;
+  }
+  body.mini-nav-active #sidebarLeft .sidebar-menu-button {
+    font-size: 0 !important; /* Hide text */
+    text-align: center;
+    padding: 15px 0 !important;
+  }
+  body.mini-nav-active #sidebarLeft .sidebar-menu-icon {
+    font-size: 24px !important;
+    margin: 0 !important;
+    float: none !important;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  body.mini-nav-active #sidebarLeft .sidebar-heading,
+  body.mini-nav-active #sidebarLeft .sidebar-menu-label,
+  body.mini-nav-active #sidebarLeft .sidebar-menu-item ul {
+    display: none !important;
+  }
+
+  /* Hide navbar-toggler on desktop */
+  @media (min-width: 769px) {
+    .navbar-toggler {
+      display: none !important;
+    }
+  }
+  /* -------------------------------------- */
+
+  /* ChatGPT-like Layout */
+  .ai-container {
+    display: flex;
+    height: calc(100vh - 60px);
+    margin-top: 60px;
+    background-color: #f7f7f8;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .ai-sidebar {
+    width: 260px;
+    background-color: #202123;
+    color: #ececf1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    z-index: 1000;
+    position: relative;
+    height: 100%;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .ai-sidebar.collapsed {
+    width: 0;
+    padding: 0;
+  }
+
+  .ai-sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    width: 240px;
+  }
+
+  .ai-sidebar .new-chat-btn {
+    background-color: #12735a;
+    border: 1px solid #12735a;
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    width: 100%;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  .ai-sidebar .new-chat-btn:hover {
+    background-color: #0b5c47;
+    border-color: #0b5c47;
+  }
+
+  .ai-history {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0; /* Critical for flex scrolling */
+    margin-bottom: 20px;
+  }
+
+  .conversation-item {
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #ececf1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+  }
+  .conversation-item:hover,
+  .conversation-item.active {
+    background-color: #2a2b32;
+  }
+  .conversation-item i {
+    margin-right: 10px;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Main Chat Area */
+  .ai-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-color: white;
+    width: 100%;
+  }
+
+  /* Header */
+  .ai-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  /* Header AI Sidebar Toggle & Dashboard Toggle */
+  .header-sidebar-toggle,
+  .dash-toggle-btn {
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    color: #555;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+  }
+  .header-sidebar-toggle:hover,
+  .dash-toggle-btn:hover {
+    background-color: #f0f0f0;
+  }
+
+  .floating-sidebar-toggle {
+    display: none !important;
+  }
+
+  /* Message List */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    position: relative;
+  }
+
+  /* Message Styling */
+  .message {
+    display: flex;
+    margin-bottom: 24px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+  .message.user {
+    flex-direction: row-reverse;
+  }
+
+  .message-content {
+    padding: 16px 24px;
+    border-radius: 18px;
+    max-width: 90%;
+    line-height: 1.7;
+    position: relative;
+    font-size: 1.05rem;
+    word-wrap: break-word;
+  }
+
+  .message.user .message-content {
+    background-color: #12735a;
+    color: white;
+    border-radius: 18px 18px 4px 18px;
+    box-shadow: 0 2px 5px rgba(18, 115, 90, 0.2);
+  }
+  .message.ai .message-content {
+    background-color: #f7f7f8;
+    color: #374151;
+    border-radius: 18px 18px 18px 4px;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  .message-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    margin: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .message.user .message-avatar {
+    display: none;
+  }
+  .message.ai .message-avatar {
+    background: #19c37d;
+    color: white;
+  }
+
+  /* Image Cards */
+  .image-card {
+    max-width: 512px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 10px 0;
+    background: white;
+    border: 1px solid #e5e5e5;
+  }
+  .image-card img {
+    width: 100%;
+    display: block;
+    height: auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .image-card img:hover {
+    transform: scale(1.02);
+  }
+
+  .image-card-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: #f7f7f8;
+    border-top: 1px solid #e5e5e5;
+  }
+  .image-card-actions a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    font-size: 0.9em;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .image-card-actions a:hover {
+    background: #e9e9e9;
+    text-decoration: none;
+  }
+  .image-card-actions i {
+    margin-right: 6px;
+    font-size: 16px;
+  }
+
+  /* Skeleton Loading Effects */
+  .image-skeleton {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #f0f0f0;
+    position: relative;
+    overflow: hidden;
+  }
+  .image-skeleton::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .image-placeholder-loading {
+    width: 300px;
+    height: 300px;
+    background: #f0f0f0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e5e5e5;
+  }
+  .skeleton-shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+  .loading-text {
+    z-index: 1;
+    color: #888;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  /* Input Area */
+  .input-area {
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 20px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .input-controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .input-container {
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    background-color: white;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    transition: all 0.2s;
+  }
+  .input-container:focus-within {
+    border-color: rgba(18, 115, 90, 0.5);
+    box-shadow: 0 0 15px rgba(18, 115, 90, 0.1);
+  }
+
+  .input-container textarea {
+    border: none;
+    resize: none;
+    max-height: 200px;
+    min-height: 24px;
+    padding: 12px;
+    width: 100%;
+    outline: none;
+    font-size: 1rem;
+    line-height: 1.5;
+    background: transparent;
+  }
+
+  .send-btn {
+    background-color: #12735a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    margin: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+  }
+  .send-btn:hover {
+    background-color: #0d8bf2;
+  }
+  .send-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .attach-btn,
+  .stop-btn {
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  .attach-btn:hover,
+  .stop-btn:hover {
+    background-color: #f0f0f0;
+  }
+  .stop-btn {
+    color: #dc3545;
+  }
+  .stop-btn:hover {
+    background-color: #ffe5e5;
+  }
+
+  .file-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+  }
+  .file-preview .remove-file {
+    cursor: pointer;
+    color: #dc3545;
+    margin-left: auto;
+  }
+
+  .credits-info {
+    font-size: 0.8em;
+    color: #8e8ea0;
+    text-align: center;
+    margin-top: 12px;
+    padding: 0 10px;
+  }
+
+  /* Loading Spinner */
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Typing Indicator (Modern alternate to spinner for chat) */
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+  }
+  .typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: #8e8ea0;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: scale(0.8);
+      opacity: 0.4;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+
+  .message-content h1,
+  .message-content h2,
+  .message-content h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 10px;
+    margin-bottom: 5px;
+  }
+  .message-content p {
+    margin-bottom: 16px;
+  }
+  .message-content ul,
+  .message-content ol {
+    padding-left: 20px;
+    margin-bottom: 16px;
+  }
+  .message-content li {
+    margin-bottom: 8px;
+  }
+  .message-content pre {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    border: 1px solid #e5e5e5;
+  }
+  .message-content code {
+    background: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9em;
+  }
+  /* KaTeX Block Math Styling */
+  .katex-display {
+    margin: 1.2em 0 !important;
+    padding: 10px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+  .katex {
+    font-size: 1.1em !important;
+  }
+  .message.user .message-content code {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+
+  /* Mode Indicators */
+  .mode-indicator {
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 10px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-weight: 500;
+  }
+  .mode-indicator.image {
+    background: #e4f3ed;
+    color: #1565c0;
+  }
+
+  /* Welcome Screen */
+  .welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .welcome-screen h2 {
+    font-weight: 700;
+    color: #202123;
+    margin-bottom: 24px;
+  }
+
+  .example-prompts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    max-width: 600px;
+    margin-top: 30px;
+  }
+  .example-prompt {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+  .example-prompt:hover {
+    background: #f7f7f8;
+    border-color: #12735a;
+    transform: translateY(-2px);
+  }
+
+  /* Sidebar Overlay for Mobile */
+  .ai-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  .sidebar-mobile-close {
+    display: none;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .ai-sidebar-overlay.active {
+      display: block;
+    }
+    .ai-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 1000;
+      width: 280px;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    .ai-sidebar.mobile-open {
+      transform: translateX(0);
+    }
+    .sidebar-mobile-close {
+      display: flex;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #ececf1;
+      cursor: pointer;
+      z-index: 1001;
+      padding: 5px;
+    }
+    .input-area {
+      padding: 10px;
+    }
+    .ai-main {
+      width: 100%;
+    }
+    .message-content {
+      max-width: 90%;
+      padding: 10px 15px;
+      font-size: 0.95rem;
+    }
+    .image-card {
+      max-width: 280px;
+      margin: 10px auto;
+    }
+    .image-placeholder-loading {
+      max-width: 250px;
+      height: auto;
+      aspect-ratio: 1/1;
+      margin: 10px auto;
+    }
+    .example-prompt {
+      padding: 10px;
+    }
+    .example-prompts {
+      grid-template-columns: 1fr;
+    }
+    .dash-toggle-btn {
+      display: none; /* Hide dash toggle on mobile to avoid overlapping */
+    }
+
+    /* Disable mini-sidebar logic on mobile, fallback to standard hide */
+    body.mini-nav-active #sidebarLeft {
+      display: none !important;
+    }
+    body.mini-nav-active {
+      padding-left: 0 !important;
+    }
+  }
+</style>
+
+<!-- Image Modal -->
+<div
+  class="image-modal"
+  id="imageModal"
+  style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+  "
+>
+  <div class="image-modal-content" style="max-width: 90%; max-height: 90%">
+    <img
+      id="modalImage"
+      src=""
+      alt="Expanded Image"
+      style="width: 100%; height: auto; border-radius: 5px"
+    />
+  </div>
+  <div
+    class="image-modal-close"
+    onclick="closeImageModal()"
+    style="
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.5);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    "
+  >
+    <i class="material-icons">close</i>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div
+  class="modal fade"
+  id="deleteModal"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+  style="z-index: 10000"
+>
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmer la suppression</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Êtes-vous sûr de vouloir supprimer la conversation "<b
+          id="delete-conv-title"
+        ></b
+        >" ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout-content" style="padding: 0; background: white">
+  <div class="ai-container">
+    <!-- Mobile Sidebar Overlay -->
+    <div class="ai-sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <div class="ai-sidebar" id="sidebar">
+      <button class="sidebar-mobile-close" onclick="toggleSidebar()" title="Fermer">
+        <i class="material-icons">close</i>
+      </button>
+      <div class="ai-sidebar-content" id="sidebar-content">
+        <div class="new-chat-btn" onclick="startNewChat()">
+          <i class="material-icons" style="margin-right: 10px">add</i> Nouveau
+          Chat
+        </div>
+
+        <div
+          style="
+            margin-bottom: 10px;
+            font-size: 0.8em;
+            color: #8e8ea0;
+            text-transform: uppercase;
+            padding-left: 5px;
+          "
+        >
+          Historique
+        </div>
+
+        <div class="ai-history" id="conversationHistory">
+          {% for conv in conversations %}
+          <div
+            class="conversation-item {% if active_conversation.id == conv.id %}active{% endif %}"
+            onclick="loadConversation('{{ conv.id }}')"
+          >
+            <i class="material-icons">chat_bubble_outline</i>
+            <span style="overflow: hidden; text-overflow: ellipsis; flex: 1"
+              >{{ conv.title|default:"Nouvelle conversation" }}</span
+            >
+            <i
+              class="material-icons text-danger delete-conv-btn"
+              style="
+                font-size: 16px;
+                margin-left: auto;
+                opacity: 0.6;
+                cursor: pointer;
+              "
+              onclick="event.stopPropagation(); confirmDeleteConversation('{{ conv.id }}', '{{ conv.title|escapejs }}')"
+              title="Supprimer"
+            >
+              delete
+            </i>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-3" style="font-size: 0.9em">
+            Aucune conversation
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Credits in Sidebar bottom -->
+        <div
+          style="
+            border-top: 1px solid #565869;
+            padding-top: 15px;
+            margin-top: auto;
+          "
+        >
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span
+              ><i
+                class="material-icons"
+                style="font-size: 14px; vertical-align: middle"
+                >access_time</i
+              >
+              Journalier</span
+            >
+            <span class="badge badge-warning" id="daily-credits"
+              >{{ daily_credits }}</span
+            >
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span
+              ><i
+                class="material-icons"
+                style="font-size: 14px; vertical-align: middle"
+                >account_balance_wallet</i
+              >
+              Portefeuille</span
+            >
+            <span class="badge badge-success" id="wallet-credits"
+              >{{ wallet_credits }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Chat -->
+    <div class="ai-main" id="mainContent">
+      <!-- Header -->
+      <div class="ai-header">
+        <!-- Sidebar Toggle -->
+        <button
+          class="header-sidebar-toggle"
+          onclick="toggleSidebar()"
+          title="Historique"
+        >
+          <i class="material-icons">menu</i>
+        </button>
+
+        <h5 class="m-0 font-weight-bold" id="conversation-title" style="flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px;">
+          {% if active_conversation %}{{ active_conversation.title|default:"Assistant IA" }}{% else %}Assistant IA{% endif %}
+        </h5>
+
+        <!-- Dashboard Toggle -->
+        <button
+          class="dash-toggle-btn d-none d-md-flex"
+          onclick="toggleDashboardSidebar()"
+          title="Minimiser/Agrandir le Menu"
+        >
+          <i class="material-icons">apps</i>
+        </button>
+      </div>
+
+      <!-- Messages Area -->
+      <div class="chat-messages" id="chat-messages">
+
+        {% if not messages %}
+        <div class="welcome-screen" id="welcome-screen">
+          <h2>Assistant IA</h2>
+          <p class="text-muted mb-4">
+            Posez-moi une question sur le sujet de votre choix.
+          </p>
+
+          <div class="example-prompts">
+            <div
+              class="example-prompt"
+              onclick="
+                setInput('Expliquez la physique quantique de manière simple')
+              "
+            >
+              <div class="d-flex align-items-center mb-2">
+                <i class="material-icons mr-2" style="color: #12735a"
+                  >science</i
+                >
+                <strong>Explication scientifique</strong>
+              </div>
+              <small class="text-muted"
+                >"Expliquez la physique quantique simplement"</small
+              >
+            </div>
+
+            <div
+              class="example-prompt"
+              onclick="setInput('Aide-moi à écrire un poème sur l\'amour')"
+            >
+              <div class="d-flex align-items-center mb-2">
+                <i class="material-icons mr-2" style="color: #12735a">create</i>
+                <strong>Création littéraire</strong>
+              </div>
+              <small class="text-muted">"Écrire un poème sur l'amour"</small>
+            </div>
+
+            <!--
+            <div
+              class="example-prompt"
+              onclick="
+                setMode('image');
+                setInput(
+                  'Un coucher de soleil sur une plage tropicale with 1024x1024 size',
+                );
+              "
+            >
+              <div class="d-flex align-items-center mb-2">
+                <i class="material-icons mr-2" style="color: #12735a">image</i>
+                <strong>Génération d'image</strong>
+              </div>
+              <small class="text-muted">"Coucher de soleil tropical"</small>
+            </div>
+            -->
+
+            <div
+              class="example-prompt"
+              onclick="
+                setInput(
+                  'Rédige un email professionnel pour une demande de congé',
+                )
+              "
+            >
+              <div class="d-flex align-items-center mb-2">
+                <i class="material-icons mr-2" style="color: #12735a">email</i>
+                <strong>Aide professionnelle</strong>
+              </div>
+              <small class="text-muted">"Email pour demande de congé"</small>
+            </div>
+          </div>
+        </div>
+        {% else %} {% for msg in messages %}
+        <div class="message user">
+          <div class="message-content">
+            {{ msg.user_message }} {% if msg.mode == 'image' %}
+            <span class="mode-indicator image">Image</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="message ai">
+          <div class="message-avatar">
+            <i class="material-icons">smart_toy</i>
+          </div>
+          <div class="message-content">
+            {% if msg.mode == 'image' %} {% if msg.image %}
+            <div class="image-card">
+              <div class="image-skeleton"></div>
+              <img
+                src="{{ msg.image.url }}"
+                alt="Generated Image"
+                onclick="openImageModal('{{ msg.image.url }}')"
+                loading="lazy"
+                style="opacity: 0; transition: opacity 0.8s ease-in-out"
+                onload="
+                  this.style.opacity = '1';
+                  this.previousElementSibling.style.display = 'none';
+                "
+              />
+              <div class="image-card-actions">
+                <a href="{{ msg.image.url }}" download target="_blank">
+                  <i class="material-icons">download</i> Télécharger
+                </a>
+                <a
+                  href="#"
+                  onclick="openImageModal('{{ msg.image.url }}'); return false;"
+                >
+                  <i class="material-icons">zoom_in</i> Agrandir
+                </a>
+              </div>
+            </div>
+            {% else %}
+            <div
+              class="image-placeholder-loading"
+              style="width: 100%; max-width: 300px"
+            >
+              <div class="skeleton-shimmer"></div>
+              <div class="loading-text">
+                Génération via <span id="loading-model-name">IA</span>...
+              </div>
+            </div>
+            {% endif %}
+            <small class="text-muted d-block mt-2">
+              <i>Prompt: {{ msg.user_message|truncatechars:100 }}</i>
+            </small>
+            {% else %}
+            <div class="markdown-content">{{ msg.ai_response }}</div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %} {% endif %}
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-area">
+        <input type="file" id="file-input" style="display: none" accept="*/*" />
+        <div id="file-preview-container"></div>
+        <!-- Model Selector inside Input Container -->
+        <div
+          class="input-container"
+          style="
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            overflow: hidden;
+          "
+        >
+          <!-- Top Bar of Input: Model Select & Tools -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 8px 12px;
+              background: #f7f7f8;
+              border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 10px">
+              <select
+                id="model-select"
+                class="form-control form-control-sm"
+                style="
+                  width: auto;
+                  border-radius: 15px;
+                  border: 1px solid #e5e5e5;
+                  font-size: 0.85rem;
+                  height: auto;
+                  padding: 4px 10px;
+                  cursor: pointer;
+                "
+                onchange="onModelChange()"
+              >
+                {% regroup all_models by get_model_type_display as model_list %}
+                {% for group in model_list %}
+                <optgroup label="{{ group.grouper }}">
+                  {% for model in group.list %}
+                  <option
+                    value="{{ model.api_value }}"
+                    data-type="{{ model.model_type }}"
+                    data-cost="{{ model.cost }}"
+                  >
+                    {{ model.name }} ({{ model.cost }} Pts)
+                  </option>
+                  {% endfor %}
+                </optgroup>
+                {% endfor %}
+              </select>
+              <span
+                id="model-cost-badge"
+                class="badge badge-light"
+                style="font-weight: 500; color: #666"
+              >
+                -- Pts
+              </span>
+            </div>
+
+            <div>
+              <!-- Placeholder for potential right-side tools -->
+            </div>
+          </div>
+
+          <!-- Text Area -->
+          <div
+            style="
+              position: relative;
+              padding: 5px;
+              display: flex;
+              align-items: flex-end;
+            "
+          >
+            <button
+              type="button"
+              class="attach-btn"
+              id="attach-btn"
+              onclick="document.getElementById('file-input').click()"
+              title="Joindre un fichier"
+              style="
+                height: 40px;
+                width: 40px;
+                min-width: 40px;
+                margin-bottom: 2px;
+                display: flex;
+              "
+            >
+              <i class="material-icons" style="font-size: 20px">attach_file</i>
+            </button>
+            <textarea
+              id="user-input"
+              rows="1"
+              placeholder="Envoyer un message..."
+              style="
+                width: 100%;
+                border: none;
+                resize: none;
+                outline: none;
+                padding: 10px;
+                max-height: 200px;
+                background: transparent;
+              "
+            ></textarea>
+
+            <div
+              style="position: absolute; bottom: 8px; right: 8px; display: flex"
+            >
+              <button
+                type="button"
+                class="stop-btn"
+                id="stop-btn"
+                onclick="stopGeneration()"
+                style="display: none"
+                title="Arrêter la génération"
+              >
+                <i class="material-icons">stop</i>
+              </button>
+              <button
+                type="button"
+                class="send-btn"
+                id="send-btn"
+                onclick="sendMessage()"
+                disabled
+                style="
+                  width: 32px;
+                  height: 32px;
+                  padding: 0;
+                  border-radius: 50%;
+                "
+              >
+                <i class="material-icons" style="font-size: 16px"
+                  >arrow_upward</i
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="credits-info" id="credit-info">
+          Sélectionnez un modèle pour commencer
+        </div>
+        
+        <div class="alert alert-info py-1 px-2 mx-1 mb-1" style="font-size: 0.75rem; border-radius: 6px; margin-top: 5px; background-color: #e4f3ed; border-color: #bbdefb; color: #0d47a1; text-align: center; line-height: 1.3;">
+          <i class="material-icons" style="font-size: 10px; vertical-align: middle;">info</i>
+          <strong>Message :</strong> varie selon le modèle. | 
+          <strong>Upload de fichier :</strong> Coût fixe de <strong>{{ file_upload_cost|default:400 }} crédits</strong> / fichier soumis.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentConversationId = "{{ active_conversation.id|default:'' }}";
+  let mode = "chat"; // 'chat' or 'image'
+
+  function onModelChange() {
+    const select = document.getElementById("model-select");
+    const selectedOption = select.options[select.selectedIndex];
+
+    if (!selectedOption) return;
+
+    const newMode = selectedOption.getAttribute("data-type");
+    const cost = selectedOption.getAttribute("data-cost");
+
+    mode = newMode;
+
+    // Update UI based on mode
+    const creditInfo = document.getElementById("credit-info");
+    const costBadge = document.getElementById("model-cost-badge");
+
+    costBadge.innerText = `${cost} Pts`;
+
+    if (mode === "chat") {
+      creditInfo.innerHTML = `<i class="material-icons" style="font-size:12px; vertical-align:middle;">chat_bubble_outline</i> Mode Discussion • Utilisez ce modèle pour poser des questions ou analyser des fichiers.`;
+      document.getElementById("user-input").placeholder =
+        "Envoyer un message...";
+      document.getElementById("file-input").accept = "*/*";
+      document.getElementById("attach-btn").style.display = "flex";
+    } else {
+      creditInfo.innerHTML = `<i class="material-icons" style="font-size:12px; vertical-align:middle;">image</i> Mode Image • Décrivez ce que vous voulez voir.`;
+      document.getElementById("user-input").placeholder =
+        "Décrivez l'image à générer...";
+      document.getElementById("file-input").accept = "image/*";
+      document.getElementById("attach-btn").style.display = "none";
+    }
+  }
+
+  // --- Delete Conversation Logic ---
+  let conversationIdToDelete = null;
+
+  function confirmDeleteConversation(convId, convTitle) {
+    conversationIdToDelete = convId;
+    document.getElementById("delete-conv-title").innerText = convTitle;
+    $("#deleteModal").modal("show");
+  }
+
+  document
+    .getElementById("confirm-delete-btn")
+    .addEventListener("click", function () {
+      if (!conversationIdToDelete) return;
+
+      fetch("{% url 'aiapp:index' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: JSON.stringify({
+          action: "delete_conversation",
+          id: conversationIdToDelete,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          $("#deleteModal").modal("hide");
+          if (data.status === "deleted") {
+            if (currentConversationId === conversationIdToDelete) {
+              window.location.href = "{% url 'aiapp:index' %}";
+            } else {
+              location.reload();
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Deletion error:", err);
+          alert("Erreur lors de la suppression.");
+          $("#deleteModal").modal("hide");
+        });
+    });
+
+  // Config from server (passed via template tags in the options)
+
+  // Obsolete: setMode/updateCostDisplay replaced by onModelChange
+
+  let isLoading = false;
+  let sidebarOpen = true; // State for desktop
+  let mobileSidebarOpen = false; // State for mobile
+  let abortController = null; // For stopping generation
+  let attachedFile = null; // Currently attached file
+
+  // Elements
+  const sidebar = document.getElementById("sidebar");
+  const sidebarContent = document.getElementById("sidebar-content");
+  const mainContent = document.getElementById("mainContent");
+  const userInput = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
+  const messagesContainer = document.getElementById("chat-messages");
+  const creditInfo = document.getElementById("credit-info");
+  const stopBtn = document.getElementById("stop-btn");
+  const fileInput = document.getElementById("file-input");
+  const filePreviewContainer = document.getElementById(
+    "file-preview-container",
+  );
+
+  // File Input Handler moved to DOMContentLoaded
+
+  function showFilePreview(file) {
+    filePreviewContainer.innerHTML = `
+            <div class="file-preview">
+                <i class="material-icons" style="color: #12735a;">insert_drive_file</i>
+                <span>${escapeHtml(file.name)}</span>
+                <i class="material-icons remove-file" onclick="removeFile()">close</i>
+            </div>
+        `;
+  }
+
+  function removeFile() {
+    attachedFile = null;
+    fileInput.value = "";
+    filePreviewContainer.innerHTML = "";
+  }
+
+  // Initialize
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initial setup
+    onModelChange(); // Initialize based on default selection
+    updateSendButtonState();
+    // updateModeButtons(); // Removed
+
+    // Auto-collapse dashboard sidebar on load to MINI mode
+    enableMiniSidebar();
+
+    // Setup Mobile State
+    if (window.innerWidth <= 768) {
+      sidebarOpen = false;
+    }
+
+    // Focus on input
+    setTimeout(() => {
+      userInput.focus();
+    }, 100);
+
+    // Render historical markdown
+    document.querySelectorAll(".markdown-content").forEach((el) => {
+      el.innerHTML = renderMarkdown(el.textContent.trim());
+    });
+
+    // Ensure Mini Sidebar is enforced after all other scripts (adminplus.js) run
+    window.addEventListener("load", enableMiniSidebar);
+    // Backup enforcement
+    setTimeout(enableMiniSidebar, 300);
+
+    // --- Event Listeners moved here for safety ---
+    if (fileInput) {
+      fileInput.addEventListener("change", function (e) {
+        if (e.target.files.length > 0) {
+          attachedFile = e.target.files[0];
+          showFilePreview(attachedFile);
+        }
+      });
+    }
+
+    const imageModal = document.getElementById("imageModal");
+    if (imageModal) {
+      imageModal.addEventListener("click", function (e) {
+        if (e.target === this) {
+          closeImageModal();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        closeImageModal();
+      }
+    });
+  });
+
+  // 0. Dashboard Sidebar Control - MINI Mode
+  function enableMiniSidebar() {
+    if (window.innerWidth <= 768) {
+        document.body.classList.remove("mini-nav-active");
+        document.body.classList.remove("si-l3-md-up");
+        return;
+    }
+    document.body.classList.add("mini-nav-active");
+    document.body.classList.remove("si-l3-md-up");
+    // Force removal again just in case
+    if (document.body.classList.contains("si-l3-md-up")) {
+      document.body.classList.remove("si-l3-md-up");
+    }
+  }
+
+  function toggleDashboardSidebar() {
+    // Toggle body classes between full (si-l3-md-up) and mini (mini-nav-active)
+    if (document.body.classList.contains("mini-nav-active")) {
+      // Switch to Full
+      document.body.classList.remove("mini-nav-active");
+      document.body.classList.add("si-l3-md-up");
+    } else {
+      // Switch to Mini
+      document.body.classList.add("mini-nav-active");
+      document.body.classList.remove("si-l3-md-up");
+    }
+  }
+
+  // 1. Sidebar Toggle with Anime.js
+  function toggleSidebar() {
+    const isMobileMode = window.innerWidth <= 768;
+    const isMobileOpen = sidebar.classList.contains("mobile-open");
+
+    if (isMobileMode || isMobileOpen) {
+      sidebar.classList.toggle("mobile-open");
+      const overlay = document.getElementById("sidebar-overlay");
+      if (overlay) {
+        overlay.classList.toggle("active");
+      }
+    } else {
+      if (sidebarOpen) {
+        // Close
+        anime({
+          targets: sidebar,
+          width: [260, 0],
+          padding: [10, 0],
+          easing: "spring(1, 80, 10, 0)",
+          duration: 500,
+          begin: function () {
+            sidebar.style.overflow = "hidden";
+          },
+        });
+        anime({
+          targets: sidebarContent,
+          opacity: [1, 0],
+          duration: 300,
+          easing: "linear",
+        });
+        sidebarOpen = false;
+      } else {
+        // Open
+        anime({
+          targets: sidebarContent,
+          opacity: [0, 1],
+          duration: 400,
+          delay: 100,
+          easing: "linear",
+        });
+        anime({
+          targets: sidebar,
+          width: [0, 260],
+          padding: [0, 10],
+          easing: "spring(1, 80, 10, 0)",
+          duration: 500,
+        });
+        sidebarOpen = true;
+      }
+    }
+  }
+
+  // ... (Rest of the JS functions: openImageModal, startNewChat, etc. remain unchanged)
+
+  function openImageModal(imageUrl) {
+    const modal = document.getElementById("imageModal");
+    const modalImage = document.getElementById("modalImage");
+    modalImage.src = imageUrl;
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeImageModal() {
+    const modal = document.getElementById("imageModal");
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  }
+
+  // Moved event listeners to DOMContentLoaded
+
+  function startNewChat() {
+    window.location.href = "{% url 'aiapp:index' %}";
+  }
+
+  function loadConversation(conversationId) {
+    window.location.href = "{% url 'aiapp:index' %}?c=" + conversationId;
+  }
+
+  // Removed old event listeners for mode-chat/mode-image
+
+  function updateSendButtonState() {
+    if (userInput.value.trim().length > 0 && !isLoading) {
+      sendBtn.disabled = false;
+    } else {
+      sendBtn.disabled = true;
+    }
+  }
+
+  function setInput(text) {
+    userInput.value = text;
+    userInput.focus();
+    updateSendButtonState();
+    userInput.style.height = "auto";
+    userInput.style.height = Math.min(userInput.scrollHeight, 200) + "px";
+  }
+
+  userInput.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 200) + "px";
+    updateSendButtonState();
+  });
+
+  userInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && !isLoading) {
+      e.preventDefault();
+      if (userInput.value.trim().length > 0) {
+        sendMessage();
+      }
+    }
+  });
+
+  // Toute réponse (IA ou utilisateur) est nettoyée avant d'être insérée dans la page.
+  function renderMarkdown(text) {
+    return DOMPurify.sanitize(marked.parse(text), { USE_PROFILES: { html: true, mathMl: true, svg: true } });
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value == null ? "" : String(value);
+    return div.innerHTML;
+  }
+
+  function appendUserMessage(text, isImageMode = false) {
+    document.getElementById("welcome-screen")?.remove();
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message user";
+    let modeIndicator = isImageMode
+      ? '<span class="mode-indicator image">Image</span>'
+      : "";
+    messageDiv.innerHTML = `<div class="message-content">${escapeHtml(text)}${modeIndicator}</div>`;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  function appendAIMessage(text, isImage = false, prompt = null) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message ai";
+    let content = "";
+    if (isImage) {
+      content = `
+                <div class="image-card">
+                    <div class="image-skeleton"></div>
+                    <img src="${text}" alt="Generated Image" onclick="openImageModal('${text}')" 
+                         style="opacity: 0; transition: opacity 0.8s ease-in-out;"
+                         onload="this.style.opacity='1'; this.previousElementSibling.style.display='none'">
+                    <div class="image-card-actions">
+                        <a href="${text}" download target="_blank"><i class="material-icons">download</i> Télécharger</a>
+                        <a href="#" onclick="openImageModal('${text}'); return false;"><i class="material-icons">zoom_in</i> Agrandir</a>
+                    </div>
+                </div>
+                ${prompt ? `<small class="text-muted d-block mt-2"><i>Prompt: ${escapeHtml(prompt)}</i></small>` : ""}
+            `;
+    } else {
+      content = renderMarkdown(text);
+    }
+    messageDiv.innerHTML = `<div class="message-avatar"><i class="material-icons">smart_toy</i></div><div class="message-content">${content}</div>`;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  function showLoading() {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message ai";
+    messageDiv.id = "loading-msg";
+
+    let content = "";
+    if (mode === "image") {
+      content = `
+                <div class="image-placeholder-loading" style="width: 100%; max-width: 400px; aspect-ratio: 1/1;">
+                    <div class="skeleton-shimmer"></div>
+                    <div class="loading-text">Génération de votre image...</div>
+                </div>
+            `;
+    } else {
+      content = `
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            `;
+    }
+
+    messageDiv.innerHTML = `<div class="message-avatar"><i class="material-icons">smart_toy</i></div><div class="message-content">${content}</div>`;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  function removeLoading() {
+    document.getElementById("loading-msg")?.remove();
+  }
+
+  function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function sendMessage(retryMessage = null) {
+    const message = retryMessage || userInput.value.trim();
+    const hasFile = attachedFile !== null;
+
+    if ((!message && !hasFile) || isLoading) return;
+
+    isLoading = true;
+    userInput.disabled = true;
+    document.getElementById("model-select").disabled = true;
+    document.getElementById("attach-btn").disabled = true;
+    sendBtn.disabled = true;
+    sendBtn.style.display = "none";
+    stopBtn.style.display = "flex";
+
+    if (!retryMessage) {
+      appendUserMessage(message || "[Fichier joint]", mode === "image");
+      userInput.value = "";
+      userInput.style.height = "auto";
+      updateSendButtonState();
+    }
+
+    // Create AbortController for stopping
+    abortController = new AbortController();
+
+    // Always determine mode from currently selected option for robustness
+    const modelSelect = document.getElementById("model-select");
+    const activeMode =
+      modelSelect.options[modelSelect.selectedIndex]?.getAttribute(
+        "data-type",
+      ) || "chat";
+    mode = activeMode; // Sync global mode
+
+    showLoading();
+
+    if (activeMode === "image") {
+      // Image generation (no streaming, no files)
+      const payload = {
+        action: "generate_image",
+        mode: "image",
+        prompt: message,
+        conversation_id: currentConversationId || null,
+        model: document.getElementById("model-select").value,
+      };
+
+      fetch("{% url 'aiapp:index' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: JSON.stringify(payload),
+        signal: abortController.signal,
+      })
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw { status: response.status, data: data };
+          return data;
+        })
+        .then((data) => {
+          removeLoading();
+          if (data.error) showErrorMessage(data.error, message);
+          else {
+            if (data.image_url) appendAIMessage(data.image_url, true, message);
+            updateCredits(data);
+            if (data.conversation_id && !currentConversationId) {
+              currentConversationId = data.conversation_id;
+              window.history.pushState({}, "", `?c=${data.conversation_id}`);
+            }
+          }
+        })
+        .catch((error) => {
+          if (error.name === "AbortError") {
+            removeLoading();
+            appendAIMessage("Génération arrêtée.");
+          } else {
+            handleFetchError(error, message);
+          }
+        })
+        .finally(() => resetInputState());
+    } else {
+      // Chat mode with streaming and file support
+      let fetchOptions;
+
+      if (hasFile) {
+        const formData = new FormData();
+        formData.append("action", "chat");
+        formData.append("mode", "chat");
+        formData.append("message", message);
+        formData.append("conversation_id", currentConversationId || "");
+        formData.append("file", attachedFile);
+        formData.append("model", document.getElementById("model-select").value);
+
+        fetchOptions = {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          body: formData,
+          signal: abortController.signal,
+        };
+
+        removeFile(); // Clear file after sending
+      } else {
+        const payload = {
+          action: "chat",
+          mode: "chat",
+          message: message,
+          conversation_id: currentConversationId || null,
+          model: document.getElementById("model-select").value,
+        };
+
+        fetchOptions = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          body: JSON.stringify(payload),
+          signal: abortController.signal,
+        };
+      }
+
+      fetch("{% url 'aiapp:index' %}", fetchOptions)
+        .then(async (response) => {
+          if (!response.ok) {
+            const data = await response.json();
+            throw { status: response.status, data: data };
+          }
+
+          removeLoading();
+
+          // Create AI message bubble for streaming
+          const messageDiv = document.createElement("div");
+          messageDiv.className = "message ai";
+          messageDiv.innerHTML = `<div class="message-avatar"><i class="material-icons">smart_toy</i></div><div class="message-content"></div>`;
+          messagesContainer.appendChild(messageDiv);
+          const contentDiv = messageDiv.querySelector(".message-content");
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let fullText = "";
+          let isFirstChunk = true;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+
+            if (isFirstChunk) {
+              // First line is metadata JSON
+              const lines = chunk.split("\n");
+              const metadataLine = lines[0];
+              try {
+                const metadata = JSON.parse(metadataLine);
+                updateCredits(metadata);
+                if (metadata.conversation_id && !currentConversationId) {
+                  currentConversationId = metadata.conversation_id;
+                  window.history.pushState(
+                    {},
+                    "",
+                    `?c=${metadata.conversation_id}`,
+                  );
+                  document.getElementById("conversation-title").innerText =
+                    metadata.title || "Assistant IA";
+                }
+              } catch (e) {
+                console.warn("Metadata parse error:", e);
+              }
+
+              // Remaining text is AI response
+              const remainingText = lines.slice(1).join("\n");
+              if (remainingText) {
+                fullText += remainingText;
+                contentDiv.innerHTML = renderMarkdown(fullText);
+              }
+              isFirstChunk = false;
+            } else {
+              fullText += chunk;
+              contentDiv.innerHTML = renderMarkdown(fullText);
+            }
+
+            scrollToBottom();
+          }
+        })
+        .catch((error) => {
+          if (error.name === "AbortError") {
+            removeLoading();
+            appendAIMessage("Génération arrêtée.");
+          } else {
+            handleFetchError(error, message);
+          }
+        })
+        .finally(() => resetInputState());
+    }
+  }
+
+  function stopGeneration() {
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
+  }
+
+  function updateCredits(data) {
+    if (data.daily_credits !== undefined)
+      document.getElementById("daily-credits").textContent = data.daily_credits;
+    if (data.wallet_credits !== undefined)
+      document.getElementById("wallet-credits").textContent =
+        data.wallet_credits;
+  }
+
+  function resetInputState() {
+    isLoading = false;
+    userInput.disabled = false;
+    document.getElementById("model-select").disabled = false;
+    document.getElementById("attach-btn").disabled = false;
+    updateSendButtonState();
+    userInput.focus();
+    sendBtn.style.display = "flex";
+    stopBtn.style.display = "none";
+    abortController = null;
+  }
+
+  function handleFetchError(error, message) {
+    removeLoading();
+    console.error("Error:", error);
+    const errorMsg =
+      error.data && error.data.error
+        ? error.data.error
+        : "Erreur de connexion. Veuillez réessayer.";
+    showErrorMessage(errorMsg, message);
+  }
+
+  function appendUserMessage(text, isImageMode = false) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message user";
+
+    let content = `<p>${escapeHtml(text)}</p>`;
+
+    // Show file preview if file is attached
+    if (attachedFile) {
+      const fileType = attachedFile.type;
+      if (fileType.startsWith("image/")) {
+        const imageUrl = URL.createObjectURL(attachedFile);
+        content += `<div style="margin-top: 10px;"><img src="${imageUrl}" alt="Uploaded Image" style="max-width: 300px; border-radius: 8px; border: 1px solid #e5e5e5;"></div>`;
+      } else if (fileType === "application/pdf") {
+        content += `<div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="material-icons" style="color: #fff;">picture_as_pdf</i>
+                    <span style="color: #fff;">${escapeHtml(attachedFile.name)}</span>
+                </div>`;
+      } else {
+        content += `<div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="material-icons" style="color: #fff;">insert_drive_file</i>
+                    <span style="color: #fff;">${escapeHtml(attachedFile.name)}</span>
+                </div>`;
+      }
+    }
+
+    messageDiv.innerHTML = `<div class="message-content">${content}</div>`;
+    messagesContainer.appendChild(messageDiv);
+
+    if (document.getElementById("welcome-screen")) {
+      document.getElementById("welcome-screen").style.display = "none";
+    }
+
+    scrollToBottom();
+  }
+
+  function showErrorMessage(text, originalMessage) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message ai";
+    messageDiv.innerHTML = `
+            <div class="message-avatar"><i class="material-icons">smart_toy</i></div>
+            <div class="message-content">
+                <div style="color: #dc3545; padding: 12px; background: #f8d7da; border-radius: 8px; border-left: 4px solid #dc3545; margin-bottom: 8px;">
+                    <i class="material-icons" style="vertical-align: middle; margin-right: 8px;">error</i>
+                    <strong>${escapeHtml(text)}</strong>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger js-retry" style="border-radius: 20px;">
+                    <i class="material-icons" style="font-size: 16px; vertical-align: middle;">refresh</i> Réessayer
+                </button>
+            </div>
+        `;
+    const retryBtn = messageDiv.querySelector(".js-retry");
+    if (retryBtn) retryBtn.addEventListener("click", () => retryPrompt(originalMessage));
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  window.retryPrompt = function (msg) {
+    const errorMsgs = messagesContainer.querySelectorAll(".message.ai");
+    if (errorMsgs.length > 0) {
+      errorMsgs[errorMsgs.length - 1].remove();
+    }
+    sendMessage(msg);
+  };
+
+  scrollToBottom();
+</script>
+{% endblock %}

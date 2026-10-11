@@ -1,0 +1,17 @@
+{% extends "account/base.html" %}
+{% load account %}
+{% block head_title %}Confirmer mon e-mail{% endblock %}
+{% block content %}
+<h2>Confirmer ton adresse e-mail</h2>
+{% if confirmation %}
+  <p class="sous-titre">Confirme que <strong>{{ confirmation.email_address.email }}</strong> est bien ton adresse.</p>
+  <p class="message success">En confirmant, tu reçois tout de suite 1 000 FCFA sur ton solde et 500 crédits IA.</p>
+  <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" style="margin-top:18px">
+    {% csrf_token %}
+    <button class="btn btn-encre btn-bloc" type="submit">Confirmer mon adresse</button>
+  </form>
+{% else %}
+  {% url 'account_email' as email_url %}
+  <p class="sous-titre">Ce lien de confirmation a expiré ou n'est pas valide. <a href="{{ email_url }}">Demande un nouveau lien</a>.</p>
+{% endif %}
+{% endblock %}

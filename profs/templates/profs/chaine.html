@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ profil.nom_public }} — EasySchool{% endblock %}
+{% block content %}
+<section class="chaine-banniere">
+  <div class="conteneur chaine-entete">
+    {% include "profs/_avatar.html" with p=profil grand=True %}
+    <div>
+      <h1>{{ profil.nom_public }}</h1>
+      <p>{% if profil.est_verifie %}<span class="badge-verifie"><svg class="icone" aria-hidden="true"><use href="#i-verifie"/></svg>Identité vérifiée</span> {% endif %}{{ profil.matieres_texte }}{% if profil.etablissement %} · {{ profil.etablissement }}{% endif %}</p>
+      <p class="chaine-stats"><span><b>{{ abonnes }}</b> abonné{{ abonnes|pluralize }}</span><span><b>{{ cours|length }}</b> cours</span><span><b>{{ vues }}</b> vue{{ vues|pluralize }}</span>
+        <span>{% for n in profil.niveaux.all %}{{ n.abrege }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></p>
+    </div>
+    <div class="chaine-action">
+      {% if proprietaire %}
+        <a class="btn btn-clair" href="{% url 'profs:studio' %}">Gérer ma chaîne</a>
+      {% elif abonnement %}
+        <span class="prix-grand">Abonné</span>
+        <span>jusqu'au {{ abonnement.fin|date:"j F Y" }}</span>
+      {% else %}
+        <span class="prix-grand">{{ profil.prix_mensuel }} F / mois</span>
+        <a class="btn btn-surligneur" href="{% url 'profs:abonner' profil.slug %}">S'abonner</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+<section class="section" style="padding-top:36px">
+  <div class="conteneur">
+    {% if profil.bio %}<div class="prose" style="margin-bottom:36px"><h2>Présentation</h2><p>{{ profil.bio|linebreaksbr }}</p></div>{% endif %}
+    <h2>Cours</h2>
+    {% if cours %}
+      <div class="cours-grille">{% for c in cours %}{% include "profs/_cours_carte.html" %}{% endfor %}</div>
+    {% else %}<p class="encadre">Ce professeur n'a pas encore publié de cours.</p>{% endif %}
+  </div>
+</section>
+{% endblock %}

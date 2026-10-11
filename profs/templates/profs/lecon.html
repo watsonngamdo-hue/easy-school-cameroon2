@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ lecon.titre }} — {{ cours.titre }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:28px">
+  <div class="conteneur">
+    <p style="margin:0 0 10px"><a href="{% url 'profs:cours' cours.slug %}">&larr; {{ cours.titre }}</a></p>
+    <div class="lecon-grille">
+      <div>
+        <h1 style="font-size:clamp(1.5rem,3vw,2.1rem)">{{ lecon.titre }}</h1>
+        {% if lecon.type == 'video' %}
+          <div class="lecteur-video" oncontextmenu="return false">
+            <video id="video" controls playsinline preload="metadata" controlsList="nodownload noremoteplayback" disablepictureinpicture
+                   src="{% url 'profs:lecon_media' lecon.pk %}"></video>
+            {% if user.is_authenticated %}<span class="filigrane-video" id="filigrane" style="top:12%;left:8%">{{ user.first_name }} {{ user.last_name }} · {{ user.email }}</span>{% endif %}
+          </div>
+        {% else %}
+          <p class="message" style="margin-bottom:14px">Ce document est réservé à ton compte : chaque page porte ton nom.</p>
+          <div class="pages-pdf" id="pages" oncontextmenu="return false"><p class="aide" id="etat">Chargement du document…</p></div>
+        {% endif %}
+      </div>
+      <aside>
+        <h2 style="font-size:1.2rem">Leçons du cours</h2>
+        <ol class="lecons-liste">
+          {% for l in lecons %}
+            <li{% if l.pk == lecon.pk %} class="actuelle"{% endif %}>
+              <a href="{% url 'profs:lecon' l.pk %}"{% if l.pk == lecon.pk %} aria-current="page"{% endif %}>
+                <svg class="icone" aria-hidden="true"><use href="#{% if l.type == 'video' %}i-lecture{% else %}i-fichier{% endif %}"/></svg>
+                <span>{{ l.titre }}</span><span></span>
+              </a>
+            </li>
+          {% endfor %}
+        </ol>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+{% if lecon.type == 'video' %}
+<script>
+(function () {
+  // Le nom de l'élève se déplace sur la vidéo : un enregistrement d'écran partagé reste identifiable.
+  var f = document.getElementById("filigrane");
+  if (!f) return;
+  setInterval(function () {
+    f.style.top = (8 + Math.random() * 78) + "%";
+    f.style.left = (4 + Math.random() * 55) + "%";
+  }, 7000);
+})();
+</script>
+{% else %}
+<script src="{% static 'vendor/pdfjs/pdf.min.js' %}"></script>
+<script>
+(function () {
+  var conteneur = document.getElementById("pages"), etat = document.getElementById("etat");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "{% static 'vendor/pdfjs/pdf.worker.min.js' %}";
+  var echelle = window.innerWidth < 700 ? 1.0 : 1.35, ratio = window.devicePixelRatio || 1;
+  fetch("{% url 'profs:lecon_media' lecon.pk %}", { credentials: "same-origin" })
+    .then(function (r) { if (!r.ok) throw new Error("Ce document n'est pas disponible pour ton compte."); return r.arrayBuffer(); })
+    .then(function (d) { return pdfjsLib.getDocument({ data: d }).promise; })
+    .then(function (doc) {
+      conteneur.innerHTML = "";
+      var suite = Promise.resolve();
+      for (var n = 1; n <= doc.numPages; n++) (function (num) {
+        suite = suite.then(function () { return doc.getPage(num).then(function (page) {
+          var vue = page.getViewport({ scale: echelle }), c = document.createElement("canvas");
+          c.width = Math.floor(vue.width * ratio); c.height = Math.floor(vue.height * ratio); c.style.width = Math.floor(vue.width) + "px";
+          conteneur.appendChild(c);
+          return page.render({ canvasContext: c.getContext("2d"), viewport: vue, transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null }).promise;
+        }); });
+      })(n);
+    })
+    .catch(function (e) { etat.textContent = e.message; });
+})();
+</script>
+{% endif %}
+{% endblock %}

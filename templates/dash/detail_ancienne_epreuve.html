@@ -1,0 +1,76 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="layout-content" data-scrollable>
+    <div class="container-fluid">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'programme:courses' %}">Accueil</a></li>
+            <li><a href="{% url 'programme:student_dashboard' slug %}">Tableau de bord</a></li>
+            <li><a href="{% url 'programme:liste_anciennes_epreuves' slug %}">Anciennes Épreuves</a></li>
+            <li class="active">Détail</li>
+        </ol>
+
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card overflow-hidden">
+                    <div class="card-header bg-white center">
+                        <h4 class="card-title">{{ epreuve.titre }}</h4>
+                        <p class="text-muted">{% if epreuve.matiere %}{{ epreuve.matiere.nom }} - {% endif %}{{ epreuve.ecole.nom }} - {{ epreuve.annee|default:"-" }}</p>
+                    </div>
+                    
+                    {% if epreuve.ecole.logo %}
+                    <div class="center p-3">
+                        <img src="{{ epreuve.ecole.logo.url }}" alt="{{ epreuve.ecole.nom }}" style="max-height: 100px;">
+                    </div>
+                    {% endif %}
+
+                    <div class="card-block">
+                        <h5>Description</h5>
+                        <p>{{ epreuve.description|default:"Aucune description disponible." }}</p>
+                        
+                        <div class="mt-4 center">
+                            <hr>
+                            <a href="{% url 'programme:lire_epreuve' epreuve.pk %}" class="btn btn-success btn-lg btn-rounded">
+                                <i class="material-icons">menu_book</i> Lire l'épreuve
+                            </a>
+                            <p class="text-muted small mt-2">Préparez-vous au succès avec Easy School Cameroun !</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-light text-center small text-muted">
+                        Ajouté le {{ epreuve.date_ajout|date:"d F Y" }}
+                    </div>
+                </div>
+
+                {% if autres_epreuves %}
+                <div class="mt-5">
+                    <h4 class="text-center mb-4">Autres épreuves suggérées</h4>
+                    <div class="row">
+                        {% for autre in autres_epreuves %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-block">
+                                    <div class="media">
+                                        <div class="media-body">
+                                            <a href="{% url 'programme:detail_ancienne_epreuve' autre.pk %}" class="h6">{{ autre.titre }}</a>
+                                            <div class="text-muted small">{{ autre.ecole.nom }} ({{ autre.annee|default:"" }})</div>
+                                        </div>
+                                        <div class="media-right media-middle">
+                                            <a href="{% url 'programme:detail_ancienne_epreuve' autre.pk %}" class="btn btn-white btn-sm">
+                                                <i class="material-icons">arrow_forward</i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

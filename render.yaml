@@ -1,0 +1,47 @@
+# Déploiement gratuit sur Render : https://render.com
+# Tableau de bord Render > New > Blueprint > choisir ce dépôt GitHub.
+databases:
+  - name: easyschool-db
+    plan: free
+    databaseName: easyschool
+    user: easyschool
+
+services:
+  - type: web
+    name: easyschool
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn Elearning.wsgi:application --workers 2 --timeout 120
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: easyschool-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ADMIN_URL
+        generateValue: true
+      - key: SERVE_MEDIA
+        value: "True"
+      - key: ACCOUNT_EMAIL_VERIFICATION
+        value: optional        # passer à "mandatory" dès que BREVO_API_KEY est renseignée
+      - key: DEMO_ADMIN_EMAIL
+        sync: false
+      - key: DEMO_ADMIN_PASSWORD
+        sync: false
+      - key: DEMO_ELEVE_EMAIL
+        sync: false
+      - key: DEMO_ELEVE_PASSWORD
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

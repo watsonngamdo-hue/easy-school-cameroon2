@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ cours.titre }} — EasySchool{% endblock %}
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur deux-colonnes">
+    <div>
+      <p class="aide" style="margin:0 0 8px">{{ cours.niveau }}{% if cours.matiere %} · {{ cours.matiere.nom_court }}{% endif %}</p>
+      <h1 style="font-size:clamp(1.9rem,4vw,2.8rem)">{{ cours.titre }}</h1>
+      <p style="font-size:1.05rem">{{ cours.description|linebreaksbr }}</p>
+      <a class="prof-carte" style="max-width:420px;margin-top:12px" href="{% url 'profs:chaine' cours.professeur.slug %}">
+        {% include "profs/_avatar.html" with p=cours.professeur %}
+        <span><strong>{{ cours.professeur.nom_public }}</strong>{% if cours.professeur.est_verifie %}<span class="badge-verifie"><svg class="icone" aria-hidden="true"><use href="#i-verifie"/></svg>Identité vérifiée</span>{% endif %}</span>
+      </a>
+    </div>
+    <aside class="encadre">
+      {% if acces %}
+        <h3>Tu as accès à ce cours</h3>
+        {% if abonnement %}<p>Abonnement actif jusqu'au {{ abonnement.fin|date:"j F Y" }}.</p>{% endif %}
+        {% with premiere=lecons.0 %}{% if premiere %}<a class="btn btn-encre btn-bloc" href="{% url 'profs:lecon' premiere.pk %}">Commencer le cours</a>{% endif %}{% endwith %}
+      {% else %}
+        <h3>{{ cours.professeur.prix_mensuel }} F / mois</h3>
+        <p>L'abonnement donne accès à tous les cours de {{ cours.professeur.nom_public }} pendant 30 jours.</p>
+        <a class="btn btn-encre btn-bloc" href="{% url 'profs:abonner' cours.professeur.slug %}">S'abonner</a>
+      {% endif %}
+    </aside>
+  </div>
+</section>
+<section class="section" style="padding-top:32px">
+  <div class="conteneur">
+    <h2>{{ lecons|length }} leçon{{ lecons|length|pluralize }}</h2>
+    {% if lecons %}
+    <ol class="lecons-liste">
+      {% for l in lecons %}
+        <li>
+          {% if acces or l.apercu_gratuit %}
+            <a href="{% url 'profs:lecon' l.pk %}">
+              <svg class="icone" aria-hidden="true"><use href="#{% if l.type == 'video' %}i-lecture{% else %}i-fichier{% endif %}"/></svg>
+              <span>{{ l.titre }}{% if l.duree_minutes %} <span class="aide">· {{ l.duree_minutes }} min</span>{% endif %}</span>
+              {% if l.apercu_gratuit and not acces %}<span class="etiquette">Aperçu gratuit</span>{% else %}<span></span>{% endif %}
+            </a>
+          {% else %}
+            <span class="ligne-lecon verrou">
+              <svg class="icone" aria-hidden="true"><use href="#i-cadenas"/></svg>
+              <span>{{ l.titre }}{% if l.duree_minutes %} <span class="aide">· {{ l.duree_minutes }} min</span>{% endif %}</span>
+              <span class="aide">{{ l.get_type_display }}</span>
+            </span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+    {% else %}<p class="encadre">Les leçons arrivent bientôt.</p>{% endif %}
+  </div>
+</section>
+{% endblock %}

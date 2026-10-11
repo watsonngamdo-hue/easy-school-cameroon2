@@ -1,0 +1,17 @@
+1. OpenAI (ChatGPT)
+Nom affiché (name)	Valeur API (api_value)	Type (model_type)	Fournisseur (provider)	Coût Suggéré (cost)
+GPT-4o Mini	gpt-4o-mini	Chat	OpenAI	10
+GPT-4o	gpt-4o	Chat	OpenAI	50
+DALL-E 3	dall-e-3	Image Generation	OpenAI	100
+DALL-E 2	dall-e-2	Image Generation	OpenAI	50
+
+2. DeepSeek
+Nom affiché (name)	Valeur API (api_value)	Type (model_type)	Fournisseur (provider)	Coût Suggéré (cost)
+DeepSeek V3	deepseek-chat	Chat	DeepSeek	10
+DeepSeek Reasoner (R1)	deepseek-reasoner	Chat	DeepSeek	20
+DeepSeek Image Generation	deepseek-image	Image Generation	DeepSeek	50
+
+3. Google Gemini
+Nom affiché (name)	Valeur API (api_value)	Type (model_type)	Fournisseur (provider)	Coût Suggéré (cost)
+Gemini 1.5 Flash	gemini-1.5-flash	Chat	Google Gemini	10
+Gemini 1.5 Pro	gemini-1.5-pro	Chat	Google Gemini	40

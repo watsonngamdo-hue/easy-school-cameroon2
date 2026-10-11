@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}S'abonner à {{ profil.nom_public }} — EasySchool{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="conteneur" style="max-width:640px">
+    <div class="encadre seyes" style="--marge-x:-10px;padding:28px">
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
+        {% include "profs/_avatar.html" with p=profil %}
+        <div><h1 style="font-size:1.6rem;margin:0">S'abonner à {{ profil.nom_public }}</h1><span class="aide">{{ profil.matieres_texte }}</span></div>
+      </div>
+      <p class="annotation" style="font-size:2.6rem;margin:8px 0">{{ profil.prix_mensuel }} F</p>
+      <ul class="coordonnees" style="margin:12px 0 18px">
+        <li><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>Accès à toutes les vidéos et tous les PDF de ce professeur pendant 30 jours</li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>Payé avec ton solde EasySchool, sans renouvellement automatique</li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>{{ part_prof }} F reviennent directement au professeur</li>
+      </ul>
+      {% if en_cours %}<p class="message" style="margin-bottom:16px">Tu es déjà abonné jusqu'au {{ en_cours.fin|date:"j F Y" }}. Payer maintenant ajoute 30 jours à cette date.</p>{% endif %}
+      <p>Ton solde : <strong>{{ user.somme }} F</strong></p>
+      {% if solde_suffisant %}
+        <form method="post">{% csrf_token %}
+          <button class="btn btn-encre btn-bloc" type="submit">Payer {{ profil.prix_mensuel }} F et m'abonner</button>
+        </form>
+      {% else %}
+        <p class="message error">Il te manque {{ manque }} F pour t'abonner. Recharge ton compte par Mobile Money.</p>
+        <a class="btn btn-encre btn-bloc" href="{% url 'programme:pay' %}" style="margin-top:12px">Recharger mon solde</a>
+      {% endif %}
+      <p style="margin-top:16px"><a href="{% url 'profs:chaine' profil.slug %}">Retour à la chaîne</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

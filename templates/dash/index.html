@@ -1,0 +1,434 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  .btn-custom-voir {
+      background-color: #12735a; /* Couleur simple et unie */
+      color: #ffffff !important;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 15px;
+      font-size: 13px;
+      transition: background-color 0.3s;
+  }
+  .btn-custom-voir:hover {
+      background-color: #0b5c47;
+      color: #ffffff !important;
+  }
+</style>
+
+  <!-- Content -->
+  <div class="layout-content" data-scrollable>
+    <div class="container-fluid">
+
+      <ol class="breadcrumb">
+        <li><a href="/courses/">Home</a></li>
+        <li class="active">Dashboard</li>
+        <br>
+        <h3 class="text-center">Bienvenue en classe de <span class="text-info">{{class}}</span></h3>
+      </ol>
+      <div class="card card-stats-primary">
+        <div class="card-block">
+          <div class="media">
+            <div class="media-left media-middle">
+              <i class="material-icons text-muted-light">credit_card</i>
+            </div>
+            <div class="media-body media-middle">
+              Votre abonnement se termine le
+              <strong>{{exp}}</strong>
+            </div>
+           <div class="media-right">
+            <a class="btn btn-success btn-rounded" href="{% url 'programme:billing' %}">
+              Payez maintenant
+            </a>
+          </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-7">
+          <div class="card">
+            <div class="card-header bg-white">
+              <div class="media">
+                <div class="media-body">
+                  <h4 class="card-title">Cours</h4>
+                  <p class="card-subtitle">Vos cours récents</p>
+                </div>
+                <div class="media-right media-middle">
+                  <a class="btn btn-custom-voir" href="/courses/{{slug}}"> Voir tout</a>
+                </div>
+              </div>
+            </div>
+            <ul class="list-group list-group-fit m-b-0">
+              {% for lecon in lecons %}
+              <li class="list-group-item">
+                <div class="media">
+                  <div class="media-body media-middle">
+                    <a href="{% url 'programme:lecon_detail' lecon.niveau.slug lecon.matiere.slug lecon.slug  %}">{{lecon.nom}}</a>
+                  </div>
+                  <div class="media-right media-middle">
+                    <div class="center">
+                      <span class="label label-pill label-primary m-b-05">100%</span>
+                      <progress class="progress progress-primary m-b-0" value="100" max="100" style="width:100px">100%</progress>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              {% endfor %}
+              
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-header bg-white">
+              <div class="media">
+                <div class="media-body">
+                  <h4 class="card-title">Quizzes</h4>
+                  <p class="card-subtitle">Vos Performance</p>
+                </div>
+                <div class="media-right media-middle">
+                  <a class="btn btn-custom-voir" href="{% url 'quizapp:result' %}"> Voir tout</a>
+                </div>
+              </div>
+            </div>
+            <ul class="list-group list-group-fit m-b-0">
+             
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-header bg-white">
+              <div class="media">
+                <div class="media-body">
+                  <h4 class="card-title">Anciennes Épreuves</h4>
+                  <p class="card-subtitle">Entraînez-vous avec les épreuves passées</p>
+                </div>
+                <div class="media-right media-middle">
+                  <a class="btn btn-custom-voir" href="{% url 'programme:liste_anciennes_epreuves' slug %}"> Voir tout</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="card es-carte-profs">
+            <div class="card-header bg-white">
+              <div class="media">
+                <div class="media-body media-middle">
+                  <h4 class="card-title">Cours des professeurs</h4>
+                  <p class="card-subtitle">Vidéos et PDF pour la classe de {{ class }}</p>
+                </div>
+                <div class="media-right media-middle">
+                  <a class="btn btn-custom-voir" href="{% url 'profs:catalogue' %}?classe={{ slug }}">Voir tout</a>
+                </div>
+              </div>
+            </div>
+            {% if cours_profs %}
+              <ul class="list-group list-group-fit">
+                {% for c in cours_profs %}
+                  <li class="list-group-item">
+                    <a class="es-cours-prof" href="{% url 'profs:cours' c.slug %}">
+                      <i class="material-icons">play_circle</i>
+                      <span><strong>{{ c.titre }}</strong><br><small>{{ c.professeur.nom_public }}{% if c.matiere %} · {{ c.matiere.nom_court }}{% endif %} · {{ c.nb_lecons }} leçon{{ c.nb_lecons|pluralize }} · {{ c.professeur.prix_mensuel }} F/mois</small></span>
+                    </a>
+                  </li>
+                {% endfor %}
+              </ul>
+              {% if nb_cours_profs > 4 %}<div class="card-block"><a href="{% url 'profs:catalogue' %}?classe={{ slug }}">Voir les {{ nb_cours_profs }} cours de {{ class }}</a></div>{% endif %}
+            {% else %}
+              <div class="card-block">
+                <p style="margin:0 0 10px">Aucun professeur n'a encore publié de cours pour la {{ class }}.</p>
+                <a href="{% url 'profs:catalogue' %}">Voir les professeurs des autres classes</a>
+              </div>
+            {% endif %}
+          </div>
+          <div class="card" style="border-left:4px solid #0f5c4a">
+            <div class="card-header bg-white">
+              <h4 class="card-title">Partage tes épreuves</h4>
+              <p class="card-subtitle">Chaque épreuve nouvelle te rapporte 25 FCFA, versés tout de suite sur ton solde ({{ request.user.somme }} F).</p>
+            </div>
+            <div class="card-block">
+              <a class="btn btn-success" style="background:#0f5c4a;border-color:#0f5c4a" href="{% url 'depot:accueil' %}">Déposer une épreuve</a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header bg-white">
+              <div class="media">
+                <div class="media-body media-middle">
+                  <h4 class="card-title">Activite forum</h4>
+                  <p class="card-subtitle">Derniers sujets et commentaires</p>
+                </div>
+                <div class="media-right media-middle">
+                  <a class="btn btn-white" href=""> <i class="material-icons">keyboard_arrow_right</i></a>
+                </div>
+              </div>
+            </div>
+            <ul class="list-group list-group-fit">
+              
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+
+{% if request.user.is_first_login %}
+<style>
+  /* Premium Welcome Modal — Brand Colors */
+  .onboarding-modal .modal-content {
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 24px !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25) !important;
+    overflow: hidden;
+    animation: modalAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes modalAppear {
+    from { opacity: 0; transform: scale(0.92) translateY(30px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-gradient-header {
+    background: linear-gradient(135deg, #12735a 0%, #0b5c47 100%);
+    padding: 30px 25px 25px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .modal-gradient-header::before {
+    content: '';
+    position: absolute;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    top: -40px; right: -30px;
+  }
+
+  .modal-gradient-header::after {
+    content: '';
+    position: absolute;
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+    bottom: -20px; left: -20px;
+  }
+
+  .modal-gradient-header .welcome-img-box {
+    width: 80px;
+    height: 65px;
+    margin: 0 auto 15px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
+  .modal-gradient-header .welcome-img-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+  }
+
+  .modal-gradient-header h3 {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 22px !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+    position: relative;
+    z-index: 1;
+  }
+
+  .onboarding-body {
+    padding: 25px 25px 30px !important;
+  }
+
+  .onboarding-body > p {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 0;
+  }
+
+  .bonus-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .bonus-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #12735a;
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    transition: all 0.25s ease;
+  }
+
+  .bonus-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(18, 115, 90, 0.12);
+    border-left-color: #0b5c47;
+  }
+
+  .bonus-circle {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .bg-cash { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #166534; }
+  .bg-ai   { background: linear-gradient(135deg, #e4f3ed, #b3d6c8); color: #0a4a3a; }
+
+  .bonus-info h4 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    color: #1e293b;
+  }
+
+  .bonus-info p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .btn-start {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #12735a 0%, #0b5c47 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 15px !important;
+    border-radius: 14px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    margin-top: 25px !important;
+    cursor: pointer;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 8px 20px rgba(18, 115, 90, 0.3) !important;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-start:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 28px rgba(18, 115, 90, 0.4) !important;
+    filter: brightness(1.08);
+  }
+
+  .btn-start:active { transform: translateY(0) !important; }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .onboarding-modal .modal-dialog { margin: 12px !important; }
+    .modal-gradient-header { padding: 25px 20px 20px; }
+    .modal-gradient-header h3 { font-size: 19px !important; }
+    .modal-gradient-header .welcome-img-box { width: 65px; height: 55px; }
+    .onboarding-body { padding: 20px 18px 25px !important; }
+    .bonus-card { padding: 12px 14px; }
+    .bonus-circle { width: 40px; height: 40px; }
+    .bonus-info h4 { font-size: 15px; }
+    .btn-start { font-size: 15px !important; padding: 13px !important; }
+  }
+</style>
+
+<!-- Welcome Modal -->
+<div class="modal fade onboarding-modal" id="welcomeModal" tabindex="-1" role="dialog" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 450px;">
+    <div class="modal-content">
+      <!-- Gradient Header -->
+      <div class="modal-gradient-header">
+        <div class="welcome-img-box">
+          <img src="{% static 'dash/assets/images/logo2.jpeg' %}" alt="EasySchool Cameroon">
+        </div>
+        <h3>Bienvenue sur EasySchool Cameroon !</h3>
+      </div>
+      <!-- Body -->
+      <div class="onboarding-body">
+        <p style="text-align:center;">Nous sommes ravis de vous compter parmi nos élèves. Voici vos cadeaux de bienvenue !</p>
+        
+        <div class="bonus-container">
+          <div class="bonus-card">
+            <div class="bonus-circle bg-cash">
+              <i class="material-icons">payments</i>
+            </div>
+            <div class="bonus-info">
+              <h4>+1000 FCFA</h4>
+              <p>Crédités pour vos abonnements.</p>
+            </div>
+          </div>
+          
+          <div class="bonus-card">
+            <div class="bonus-circle bg-ai">
+              <i class="material-icons">psychology</i>
+            </div>
+            <div class="bonus-info">
+              <h4>+500 Crédits IA</h4>
+              <p>Pour poser vos questions à l'IA.</p>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-start" id="btnContinue">
+          C'est parti !
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+  $(document).ready(function() {
+    {% if request.user.is_first_login %}
+    setTimeout(function() {
+      $('#welcomeModal').modal('show');
+    }, 800);
+
+    $('#btnContinue').on('click', function() {
+      var $btn = $(this);
+      $btn.html('<i class="fa fa-spinner fa-spin"></i> Traitement...').prop('disabled', true);
+      
+      $.ajax({
+        url: "{% url 'authapp:mark-onboarded' %}",
+        type: "POST",
+        data: {
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+          $('#welcomeModal').modal('hide');
+          setTimeout(function() {
+            location.reload();
+          }, 400);
+        },
+        error: function(xhr, status, error) {
+          console.error("Error marking as onboarded:", error);
+          $('#welcomeModal').modal('hide');
+        }
+      });
+    });
+    {% endif %}
+  });
+</script>
+{% endblock extra_js %}

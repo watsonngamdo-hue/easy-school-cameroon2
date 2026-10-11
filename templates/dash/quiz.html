@@ -1,0 +1,290 @@
+{% extends "dash/base.html" %}
+{% load static %}
+
+{% block scripts %}
+<style>
+    .quiz-wizard-container {
+        padding: 40px 0;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+
+    /* GLASS CARD BASE */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    /* TIMER (FIXED) */
+    .timer-badge {
+        position: fixed;
+        top: 80px;
+        right: 40px;
+        z-index: 100;
+        background: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-weight: 700;
+        color: #1e293b;
+        border: 2px solid #12735a;
+    }
+
+    /* PROGRESS BAR */
+    .quiz-progress-wrapper {
+        margin-bottom: 32px;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .progress-modern {
+        height: 10px;
+        background: #e2e8f0;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #12735a 0%, #1f8a6b 100%);
+        width: 0%;
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* WIZARD CARD */
+    .wizard-body {
+        padding: 40px;
+        min-height: 300px;
+    }
+
+    .question-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 32px;
+        line-height: 1.4;
+    }
+
+    .options-grid {
+        display: grid;
+        gap: 16px;
+    }
+
+    .option-item {
+        position: relative;
+    }
+
+    .option-label {
+        display: block;
+        padding: 20px 24px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        color: #334155;
+    }
+
+    .option-input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .option-input:checked + .option-label {
+        background: #ecf7f2;
+        border-color: #12735a;
+        color: #12735a;
+        font-weight: 700;
+        box-shadow: 0 4px 6px -1px rgba(18, 115, 90, 0.1);
+    }
+
+    .option-label:hover {
+        border-color: #cbd5e1;
+        background: white;
+    }
+
+    /* NAVIGATION */
+    .wizard-footer {
+        padding: 24px 40px;
+        background: #f8fafc;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-nav {
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .btn-prev {
+        background: white;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-prev:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+
+    .btn-next, .btn-submit {
+        background: #12735a;
+        color: white;
+        border: none;
+    }
+
+    .btn-submit {
+        background: #10b981;
+    }
+
+    .btn-next:hover, .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* RESULTS AREA */
+    .not-visible {
+        display: none !important;
+    }
+
+    .results-card {
+        padding: 40px;
+        text-align: center;
+    }
+
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        margin: 0 auto 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        border: 8px solid #e2e8f0;
+    }
+
+    .score-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .result-item {
+        text-align: left;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        font-size: 0.9375rem;
+    }
+
+    .result-correct { background: #dcfce7; color: #166534; border: 1px solid #bbfcce; }
+    .result-incorrect { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+</style>
+<script src="{% static 'quiz/quiz.js' %}" defer></script> 
+{% endblock scripts %}
+
+{% block content %}
+<div class="timer-badge" id="timer-box">
+    <i class="material-icons" style="font-size: 20px; color: #12735a;">timer</i>
+    <span>00:00</span>
+</div>
+
+<div class="layout-content quiz-wizard-container" data-scrollable>
+    <div class="container">
+        <!-- Breadcrumbs -->
+        <ol class="breadcrumb">
+            <li><a href="/courses">Home</a></li>
+            <li><a href="{% url 'quizapp:main-view' %}">Quiz Hub</a></li>
+            <li class="active">{{obj.name}}</li>
+        </ol>
+
+        <div id="quiz-container">
+            <!-- PROGRESS BAR -->
+            <div class="quiz-progress-wrapper">
+                <div class="progress-info">
+                    <span id="progress-text">Question 1 sur {{num}}</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-modern">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- QUIZ WIZARD -->
+            <form id="quiz-form">
+                {% csrf_token %}
+                <div class="glass-card">
+                    <div class="wizard-body" id="quiz-box">
+                        <!-- Loading State -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-3 text-muted">Préparation de vos questions...</p>
+                        </div>
+                    </div>
+                    <div class="wizard-footer">
+                        <button type="button" class="btn-nav btn-prev not-visible" id="prev-btn">
+                            <i class="material-icons">arrow_back</i>
+                            Précédent
+                        </button>
+                        <button type="button" class="btn-nav btn-next" id="next-btn">
+                            Suivant
+                            <i class="material-icons">arrow_forward</i>
+                        </button>
+                        <button type="submit" class="btn-nav btn-submit not-visible" id="submit-btn">
+                            Terminer le Quiz
+                            <i class="material-icons">check_circle</i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- RESULTS CONTAINER -->
+        <div id="results-container" class="not-visible">
+            <div class="glass-card results-card">
+                <div class="score-circle" id="score-circle">
+                    <span class="score-value" id="score-val">0%</span>
+                </div>
+                <h2 id="result-title" style="font-weight: 800; margin-bottom: 12px;">Résultats</h2>
+                <p id="result-msg" class="text-muted m-b-3"></p>
+                
+                <hr class="m-y-3">
+                <div id="result-details" class="text-left"></div>
+                
+                <div class="m-t-3">
+                    <a href="{% url 'quizapp:main-view' %}" class="btn btn-primary btn-rounded btn-lg">
+                        Retour au Centre de Quiz
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

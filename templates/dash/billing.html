@@ -1,0 +1,368 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .billing-container {
+        padding: 20px;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .card-header-gradient {
+        background: linear-gradient(135deg, #12735a 0%, #0b5c47 100%);
+        padding: 24px;
+        color: white;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .payment-form-wrapper {
+        padding: 24px;
+    }
+
+    .form-group-custom {
+        margin-bottom: 20px;
+    }
+
+    .form-group-custom label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+
+    .form-control-custom {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        transition: all 0.2s;
+        font-size: 1rem;
+    }
+
+    .form-control-custom:focus {
+        border-color: #12735a;
+        box-shadow: 0 0 0 3px rgba(18, 115, 90, 0.1);
+        outline: none;
+    }
+
+    .btn-pay {
+        width: 100%;
+        padding: 10px;
+        background: #12735a;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-pay:hover {
+        background: #0b5c47;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(18, 115, 90, 0.2);
+    }
+
+    .btn-pay:active {
+        transform: translateY(0);
+    }
+
+    .recharge-cta {
+        margin-top: 24px;
+        padding: 16px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .recharge-cta a {
+        color: #12735a;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .history-table-wrapper {
+        padding: 0;
+        background: transparent;
+    }
+
+    .premium-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        margin-top: -10px;
+    }
+
+    .premium-table th {
+        padding: 12px 20px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        border: none;
+        text-align: left;
+    }
+
+    .premium-table tbody tr {
+        background: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .premium-table td {
+        padding: 16px 20px;
+        border: none;
+        vertical-align: middle;
+    }
+
+    .premium-table td:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+
+    .premium-table td:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    .premium-badge-classe {
+        background: #1f8a6b;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-block;
+        box-shadow: 0 4px 6px -1px rgba(18, 115, 90, 0.2);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border: none;
+    }
+
+    .status-badge-premium {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .status-active-premium {
+        background: #10b981;
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+    }
+
+    .status-expired-premium {
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+    }
+
+    .pulse-dot-white {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    /* Alerts */
+    .alert-custom {
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .alert-info { background: #e4f3ed; color: #0a4a3a; border: 1px solid #b3d6c8; }
+    .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+</style>
+
+<div class="layout-content billing-container" data-scrollable>
+    <div class="container">
+        <!-- Alerts -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-custom alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                    <i class="material-icons">{% if message.tags == 'success' %}check_circle{% elif message.tags == 'error' %}error{% else %}notifications{% endif %}</i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="m-b-2">
+            <ol class="breadcrumb" style="background: transparent; padding: 0;">
+                <li><a href="/courses/">Home</a></li>
+                <li class="active">Paiement & Facturation</li>
+            </ol>
+            <h2 style="font-weight: 800; color: #1e293b; margin-top: 10px;">Gestion des paiements</h2>
+            <p class="text-muted">Consultez votre historique et activez vos accès mensuels en toute simplicité.</p>
+        </div>
+
+        <div class="row">
+            <!-- Payment Form Section -->
+            <div class="col-lg-5">
+                <div class="glass-card">
+                    <div class="card-header-gradient">
+                        <h4 class="card-title">
+                            <i class="material-icons">payment</i>
+                            Payer vos frais
+                        </h4>
+                    </div>
+                    <div class="payment-form-wrapper">
+                        <p class="text-muted small m-b-2">
+                            Entrez un montant minimum de <strong>1000 FCFA</strong> pour activer votre accès mensuel.
+                        </p>
+                        
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <!-- Custom Form Rendering -->
+                            <div class="form-group-custom">
+                                <label for="{{ form.niveau.id_for_label }}">Classe / Niveau</label>
+                                <select name="niveau" id="id_niveau" class="form-control-custom">
+                                    {% for choice in form.niveau.field.choices %}
+                                        <option value="{{ choice.0 }}" {% if form.niveau.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group-custom">
+                                <label for="id_montant">Montant (FCFA)</label>
+                                <div style="position: relative;">
+                                    <input type="number" name="montant" id="id_montant" class="form-control-custom" placeholder="Min. 1000" required min="1000">
+                                    <span style="position: absolute; right: 15px; top: 12px; color: #94a3b8;">XAF</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-pay">
+                                <span>Payer</span>
+                                <i class="material-icons" style="font-size: 18px;">arrow_forward</i>
+                            </button>
+                        </form>
+
+                        <div class="recharge-cta">
+                            <i class="material-icons" style="color: #12735a;">account_balance_wallet</i>
+                            <span>
+                                Besoin de crédits ? 
+                                <a href="{% url 'programme:pay' %}">Recharger votre compte</a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History Section -->
+            <div class="col-lg-7">
+                <div class="glass-card">
+                    <div class="card-header-gradient" style="background: white; color: #334155; border-bottom: 1px solid #e2e8f0;">
+                        <h4 class="card-title">
+                            <i class="material-icons" style="color: #12735a;">history</i>
+                            Historique des transactions
+                        </h4>
+                    </div>
+                    <div class="history-table-wrapper">
+                        <div class="table-responsive">
+                            <table class="premium-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Classe</th>
+                                        <th>Montant</th>
+                                        <th>Statut</th>
+                                        <th>Expiration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for q in qs %}
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight: 600; color: #334155; font-size: 14px;">{{ q.date_pay|date:"d M Y" }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="premium-badge-classe">{{ q.niveau.libelle }}</span>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight: 800; color: #0f172a; font-size: 15px;">{{ q.montant }} FCFA</div>
+                                        </td>
+                                        <td>
+                                            {% if q.is_past_due %}
+                                                <span class="status-badge-premium status-expired-premium">
+                                                    <i class="material-icons" style="font-size: 14px;">cancel</i>
+                                                    Expiré
+                                                </span>
+                                            {% else %}
+                                                <span class="status-badge-premium status-active-premium">
+                                                    <div class="pulse-dot-white"></div>
+                                                    Actif
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div style="color: {% if q.is_past_due %}#94a3b8{% else %}#475569{% endif %}; font-weight: 600; font-size: 13px;">
+                                                {{ q.date_expired|date:"d M Y" }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" style="padding: 32px; text-align: center; color: #64748b; font-style: italic;">
+                                            Aucune transaction trouvée.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

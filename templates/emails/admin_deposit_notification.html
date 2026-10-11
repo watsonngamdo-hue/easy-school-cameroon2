@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Inter', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header { background: #12735a; color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 30px; }
+        .footer { padding: 20px; text-align: center; font-size: 13px; color: #666; background: #f8f9fc; border-radius: 0 0 8px 8px; }
+        .details { background: #ffffff; padding: 20px; border: 1px solid #e3e6f0; border-radius: 8px; margin: 25px 0; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); }
+        .details-row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eaecf4; padding-bottom: 10px; }
+        .label { font-weight: 700; color: #12735a; }
+        .cta-button { 
+            display: inline-block; 
+            background: #12735a; 
+            color: white !important; 
+            padding: 15px 35px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            font-weight: 800; 
+            margin-top: 25px;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: all 0.15s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nouveau Dépôt</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour Admin,</p>
+            <p>Un utilisateur vient de soumettre une demande de dépôt/paiement. Voici les détails de la transaction :</p>
+            
+            <div class="details">
+                <div class="details-row">
+                    <span class="label">Utilisateur :</span>
+                    <span>{{ user_name }}</span>
+                </div>
+                <div class="details-row">
+                    <span class="label">Numéro :</span>
+                    <span>{{ numero }}</span>
+                </div>
+                <div class="details-row">
+                    <span class="label">Référence :</span>
+                    <span>{{ reference }}</span>
+                </div>
+                <div class="details-row">
+                    <span class="label">Date :</span>
+                    <span>{{ date_transaction }}</span>
+                </div>
+                <div class="details-row">
+                    <span class="label">Montant :</span>
+                    <span style="font-weight: bold; color: #1cc88a;">{{ amount }}</span>
+                </div>
+                <div class="details-row" style="border-bottom: none;">
+                    <span class="label">Description :</span>
+                    <span>{{ description }}</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 30px; text-align: center;">Cliquez sur le bouton ci-dessous pour plus de détails dans l'espace administrateur.</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ admin_url }}" class="cta-button">Accéder à l'Admin</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© 2026 EasySchool Cameroun. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>

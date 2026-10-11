@@ -1,0 +1,176 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+
+{% block scripts %}
+<style>
+    .results-history-container {
+        padding: 40px 0;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+
+    .history-header {
+        margin-bottom: 32px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 24px;
+    }
+
+    /* GLASS CARD BASE */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 24px;
+        transition: transform 0.2s;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .result-row {
+        display: flex;
+        align-items: center;
+        padding: 24px 32px;
+        gap: 24px;
+    }
+
+    .quiz-info {
+        flex: 1;
+    }
+
+    .quiz-name {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+
+    .quiz-date {
+        font-size: 0.8125rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .score-badge {
+        width: 100px;
+        text-align: center;
+        padding: 12px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        font-weight: 800;
+        border: 1px solid #e2e8f0;
+    }
+
+    .score-pass {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbfcce;
+    }
+
+    .score-fail {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+
+    .difficulty-tag {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: #e2e8f0;
+        color: #475569;
+        margin-left: 10px;
+    }
+
+    .btn-retake {
+        background: #12735a;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none !important;
+        transition: all 0.2s;
+    }
+
+    .btn-retake:hover {
+        background: #0b5c47;
+        box-shadow: 0 4px 6px -1px rgba(18, 115, 90, 0.2);
+    }
+
+    .empty-history {
+        text-align: center;
+        padding: 80px 0;
+        color: #64748b;
+    }
+</style>
+{% endblock scripts %}
+
+{% block content %}
+<div class="layout-content results-history-container" data-scrollable>
+    <div class="container">
+        <!-- Breadcrumbs -->
+        <ol class="breadcrumb">
+            <li><a href="/courses/">Home</a></li>
+            <li><a href="{% url 'quizapp:main-view' %}">Centre de Quiz</a></li>
+            <li class="active">Mes Résultats</li>
+        </ol>
+
+        <div class="history-header">
+            <h1 style="font-weight: 800; color: #1e293b; margin-bottom: 8px;">Historique des Quiz</h1>
+            <p class="text-muted">Suivez votre progression et repensez les quiz pour améliorer votre score.</p>
+        </div>
+
+        <div id="results-list">
+            {% for ans in my_result %}
+                <div class="glass-card">
+                    <div class="result-row">
+                        <!-- Score Badge -->
+                        <div class="score-badge {% if ans.score >= ans.quiz.required_score_to_pass %}score-pass{% else %}score-fail{% endif %}">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; opacity: 0.8; margin-bottom: 2px;">Score</div>
+                            <div style="font-size: 1.25rem;">{{ ans.score|floatformat:0 }}%</div>
+                        </div>
+
+                        <!-- Quiz Info -->
+                        <div class="quiz-info">
+                            <div class="quiz-name">
+                                {{ ans.quiz }}
+                                <span class="difficulty-tag">{{ ans.quiz.difficluty }}</span>
+                            </div>
+                            <div class="quiz-date">
+                                <i class="material-icons" style="font-size: 16px;">event</i>
+                                Passé le {{ ans.created_at|date:"d F Y à H:i" }}
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="quiz-actions">
+                            <a href="{% url 'quizapp:quiz-view' ans.quiz.pk %}" class="btn-retake">
+                                <i class="material-icons" style="font-size: 18px;">refresh</i>
+                                Reprendre
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-history">
+                    <i class="material-icons" style="font-size: 64px; opacity: 0.3; margin-bottom: 16px;">history_toggle_off</i>
+                    <h3>Aucun résultat trouvé</h3>
+                    <p>Vous n'avez pas encore passé de quiz. Lancez-vous !</p>
+                    <a href="{% url 'quizapp:main-view' %}" class="btn btn-primary m-t-2">Voir les quiz disponibles</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

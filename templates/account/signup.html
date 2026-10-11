@@ -1,0 +1,29 @@
+{% extends "account/base.html" %}
+{% block head_title %}Inscription{% endblock %}
+
+{% block content %}
+<h2>Créer ton compte</h2>
+<p class="sous-titre">C'est gratuit. Tu reçois 1 000 FCFA et 500 crédits IA après avoir confirmé ton e-mail.</p>
+{% include "account/_erreurs.html" %}
+<form id="signup_form" method="post" action="{% url 'account_signup' %}">
+  {% csrf_token %}
+  <div class="grille-2">
+    {% with field=form.first_name %}{% include "account/_champ.html" %}{% endwith %}
+    {% with field=form.last_name %}{% include "account/_champ.html" %}{% endwith %}
+  </div>
+  {% with field=form.email %}{% include "account/_champ.html" %}{% endwith %}
+  <div class="grille-2">
+    {% with field=form.numero_telephone %}{% include "account/_champ.html" %}{% endwith %}
+    {% with field=form.ville %}{% include "account/_champ.html" %}{% endwith %}
+  </div>
+  <fieldset class="champ{% if form.classe.errors %} invalide{% endif %}" style="border:0;padding:0;margin:0 0 18px">
+    <legend class="libelle" style="margin-bottom:8px">Ta ou tes classes</legend>
+    <div class="choix-puces">{{ form.classe }}</div>
+  </fieldset>
+  {% with field=form.password1 %}{% include "account/_champ.html" with show_help=True %}{% endwith %}
+  {% with field=form.password2 %}{% include "account/_champ.html" %}{% endwith %}
+  {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+  <button class="btn btn-encre btn-bloc" type="submit">Créer mon compte</button>
+</form>
+<p class="auth-pied">Déjà inscrit ? <a href="{{ login_url }}">Se connecter</a></p>
+{% endblock %}

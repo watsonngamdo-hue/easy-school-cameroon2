@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}À propos — EasySchool Cameroun{% endblock %}
+
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur">
+    <h1>Apprendre à son rythme, où qu'on soit au Cameroun</h1>
+    <p>EasySchool réunit les cours, exercices et épreuves du secondaire sur une seule plateforme, pensée pour le téléphone.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="conteneur deux-colonnes">
+    <div class="prose">
+      <h2 style="margin-top:0">Notre mission</h2>
+      <p>Permettre à chaque élève de réviser son programme où qu'il soit, sans dépendre d'un répétiteur ni d'une bibliothèque. Nos contenus suivent le programme officiel camerounais et l'approche par compétences.</p>
+      <h2>Ce que contient la plateforme</h2>
+      <ul>
+        <li><strong>Des leçons structurées</strong> par classe, matière et chapitre, en texte, PDF et vidéo.</li>
+        <li><strong>Des exercices corrigés</strong> et des quiz d'auto-évaluation après chaque leçon.</li>
+        <li><strong>Une banque d'anciennes épreuves</strong> des lycées et collèges de référence.</li>
+        <li><strong>Des forums par matière</strong> et une messagerie privée pour échanger avec élèves et enseignants.</li>
+        <li><strong>Un assistant IA</strong> disponible 24 h/24 pour expliquer une notion ou vérifier un raisonnement.</li>
+      </ul>
+      <h2>Une base d'épreuves construite par les élèves</h2>
+      <p>Chaque élève peut envoyer les épreuves de sa classe. Les épreuves nouvelles rapportent 25 FCFA, et un contrôle automatique empêche qu'une même épreuve soit envoyée deux fois.</p>
+      <p><a class="btn btn-encre" href="{% url 'programme:level' %}">Voir les classes</a></p>
+    </div>
+    <aside class="encadre seyes" style="--marge-x:-10px">
+      <h3>En bref</h3>
+      <ul class="coordonnees">
+        <li><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>Contenu conforme au programme officiel</li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>Paiement par Orange Money et MTN MoMo</li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>1 000 FCFA = 30 jours d'accès à une classe</li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>Accessible 24 h/24 sur téléphone</li>
+      </ul>
+      <p class="annotation" style="font-size:1.8rem;margin:20px 0 0;transform:rotate(-3deg)">Bon courage pour tes révisions !</p>
+    </aside>
+  </div>
+</section>
+{% endblock content %}

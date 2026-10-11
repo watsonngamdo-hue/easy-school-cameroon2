@@ -1,0 +1,36 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Déposer une épreuve — EasySchool{% endblock %}</title>
+  <meta name="description" content="Envoie les épreuves de ta classe à EasySchool et gagne 25 FCFA pour chaque épreuve nouvelle.">
+  <meta name="theme-color" content="#083d30">
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+  <link rel="apple-touch-icon" href="{% static 'img/logo/apple-touch-icon.png' %}">
+  <link rel="stylesheet" href="{% static 'css/es.css' %}">
+</head>
+<body class="depot">
+  {% include "includes/icones.html" %}
+  <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+  <header class="entete">
+    <div class="conteneur depot-entete">
+      <a class="logo" href="{% url 'depot:accueil' %}" aria-label="Dépôt d'épreuves EasySchool">
+        <img class="logo-img" src="{% static 'img/logo/logo-128.png' %}" srcset="{% static 'img/logo/logo-128.png' %} 1x, {% static 'img/logo/logo-256.png' %} 2x" width="44" height="44" alt=""><span class="logo-texte"><span class="logo-mot">EasySchool</span><span class="logo-pays">Dépôt d'épreuves</span></span>
+      </a>
+      <a class="retour" href="{% if user.is_authenticated %}{% url 'programme:level' %}{% else %}/{% endif %}">
+        <svg class="icone" aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-fleche"/></svg><span>Retour au site principal</span>
+      </a>
+      {% if user.is_authenticated %}
+        <span class="solde-mini" title="Ton solde EasySchool">
+          <svg class="icone" aria-hidden="true"><use href="#i-portefeuille"/></svg>{{ user.somme }} F
+        </span>
+      {% endif %}
+    </div>
+  </header>
+  <main id="contenu">
+    {% block content %}{% endblock %}
+  </main>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

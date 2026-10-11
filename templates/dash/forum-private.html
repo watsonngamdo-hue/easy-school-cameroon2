@@ -1,0 +1,954 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+{% load safe_html %}
+{% block scripts %}
+<link href="{% static 'vendor/select2/select2.min.css' %}" rel="stylesheet" />
+<style>
+  /* Fix Select2 mobile and desktop width */
+  .select2-container {
+    width: 100% !important;
+  }
+  
+  /* Fix CKEditor responsiveness */
+  .django-ckeditor-widget {
+    width: 100% !important;
+  }
+  
+  #cke_id_message {
+    width: 100% !important;
+  }
+
+  /* Fix for mobile */
+  @media (max-width: 768px) {
+    .media-left.center {
+      display: none;
+    }
+    .card-body {
+      padding: 10px;
+    }
+    .page-title {
+        font-size: 14px;
+        padding: 5px;
+    }
+  }
+
+  /* Select2 Custom Styling */
+  .select2-container--default .select2-selection--multiple {
+    border: 1px solid #e0e6ed;
+    border-radius: 6px;
+    padding: 2px 6px;
+    transition: all 0.2s;
+    background-color: #f8fafc;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #12735a;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(18, 115, 90, 0.1);
+    outline: none;
+  }
+  
+  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #12735a !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 4px;
+    padding: 1px 8px;
+    margin: 2px 4px 2px 0;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    display: inline-flex;
+    align-items: center;
+    width: auto !important;
+  }
+  
+  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: rgba(255,255,255,0.8) !important;
+    margin-right: 6px;
+    font-size: 14px;
+    border-right: 1px solid rgba(255,255,255,0.2);
+    padding-right: 4px;
+  }
+  
+  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: #fff !important;
+    background: transparent !important;
+  }
+
+  .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #12735a !important;
+  }
+
+  .select2-dropdown {
+    border: 1px solid #e0e6ed !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    background: #fff;
+  }
+
+  /* MAIN CHAT CONTAINER - FIXED HEIGHT WITH SCROLLABLE MESSAGES */
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px); /* Adjust based on your header/breadcrumb height */
+    background: #e5ddd5; /* WhatsApp-like background */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  /* CHAT HEADER - FIXED AT TOP */
+  .chat-header {
+    background: linear-gradient(135deg, #12735a 0%, #0b5c47 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+
+  .chat-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  /* MESSAGES CONTAINER - SCROLLABLE */
+  .messages-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    background: #e5ddd5;
+    background-image: 
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255,255,255,.03) 10px,
+        rgba(255,255,255,.03) 20px
+      );
+  }
+
+  /* Custom Scrollbar */
+  .messages-container::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .messages-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+  }
+
+  .messages-container::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+  }
+
+  .messages-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.3);
+  }
+
+  /* INPUT CONTAINER - FIXED AT BOTTOM */
+  .input-container-fixed {
+    flex-shrink: 0;
+    background: #f0f2f5;
+    border-top: 1px solid #e0e6ed;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  }
+
+  /* Recipients Selector */
+  .recipients-bar {
+    padding: 12px 20px;
+    background: white;
+    border-bottom: 1px solid #e0e6ed;
+  }
+
+  .recipients-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 5px;
+    display: block;
+    font-weight: 500;
+  }
+
+  /* Reply Info Bar */
+  .reply-info-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #e4f3ed;
+      border-left: 4px solid #12735a;
+      margin: 0;
+      font-size: 13px;
+      transition: all 0.2s;
+  }
+  .reply-info-content {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+  }
+  .reply-user {
+      font-weight: 600;
+      color: #12735a;
+  }
+  .reply-text-preview {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #64748b;
+  }
+  .close-reply {
+      cursor: pointer;
+      color: #64748b;
+      margin-left: 10px;
+  }
+  .close-reply:hover {
+      color: #ef4444;
+  }
+
+  /* Reply Badge in Message */
+  .reply-badge {
+      display: flex;
+      flex-direction: column;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.05);
+      border-left: 3px solid #12735a;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 12px;
+  }
+  .reply-badge .reply-user-name {
+      font-weight: 600;
+      color: #12735a;
+      margin-bottom: 2px;
+  }
+  .reply-badge .reply-msg-text {
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0;
+  }
+
+  /* WhatsApp Style Input Redesign */
+  .whatsapp-input-container {
+    display: flex;
+    align-items: center;
+    background: #f0f2f5;
+    padding: 12px 20px;
+    gap: 10px;
+    position: relative;
+    z-index: 100;
+  }
+  
+  .message-input-wrapper {
+    flex-grow: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 8px 15px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .attachment-btn-wrapper {
+    position: relative;
+  }
+
+  .attachment-btn {
+    color: #54656f;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+  }
+
+  .attachment-btn:hover {
+    color: #12735a;
+  }
+
+  .attachment-menu {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    padding: 8px 0;
+    z-index: 1000;
+    min-width: 160px;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    gap: 12px;
+    color: #3b4a54;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+
+  .menu-item:hover {
+    background: #f5f6f6;
+  }
+
+  .menu-item i {
+    color: #12735a;
+    font-size: 20px;
+  }
+
+  .send-btn-circle {
+    background-color: #12735a !important;
+    color: white !important;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+    padding: 0;
+  }
+
+  .send-btn-circle:hover {
+    background-color: #0b5c47 !important;
+    transform: scale(1.05);
+  }
+
+  .send-btn-circle:active {
+    transform: scale(0.95);
+  }
+
+  .send-btn-circle i {
+    font-size: 24px;
+    margin-left: 3px;
+  }
+
+  /* Hide original file labels and inputs */
+  .hidden-form-elements {
+      display: none !important;
+  }
+
+  /* Simple Textarea Styling */
+  .message-textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    resize: none;
+    outline: none;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.5;
+    min-height: 24px;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .message-textarea:focus {
+    outline: none;
+  }
+
+  .message-textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  /* File Preview Bar */
+  .file-preview-bar {
+    display: flex;
+    gap: 10px;
+    padding: 10px 20px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+  }
+  
+  .preview-item {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    gap: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  
+  .preview-thumbnail {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .preview-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .preview-thumbnail i {
+    color: #64748b;
+  }
+  
+  .file-name {
+    font-size: 13px;
+    color: #334155;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .remove-preview {
+    font-size: 18px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.1s;
+  }
+  
+  .remove-preview:hover {
+    color: #ef4444;
+  }
+
+  /* Chat Image Enhancements */
+  .chat-image-link {
+    display: inline-block;
+    margin-top: 8px;
+    transition: transform 0.2s;
+  }
+  .chat-image-link:hover {
+    transform: scale(1.02);
+  }
+  .chat-image {
+    max-width: 100%;
+    height: auto;
+    max-height: 300px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  /* MESSAGE ALIGNMENT STYLES */
+  /* Messages received - LEFT aligned */
+  .message-received {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 15px;
+  }
+  
+  .message-received .media-body {
+    max-width: 70%;
+  }
+  
+  .message-received .card {
+    background-color: #fff;
+    border-radius: 12px 12px 12px 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border: none;
+  }
+
+  /* Messages sent - RIGHT aligned */
+  .message-sent {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+  }
+  
+  .message-sent .media-body {
+    max-width: 70%;
+  }
+  
+  .message-sent .card {
+    background-color: #dcf8c6; /* Restored original WhatsApp green */
+    border-radius: 12px 12px 4px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border: none;
+  }
+
+  .message-sent .media-left {
+    order: 2;
+    margin-left: 10px;
+    margin-right: 0;
+  }
+
+  .message-sent .media-body {
+    order: 1;
+  }
+
+  /* Breadcrumb styling */
+  .breadcrumb {
+    background: transparent;
+    padding: 10px 0;
+    margin-bottom: 15px;
+  }
+
+  /* Action button */
+  .bottom-actions {
+    padding: 15px 0;
+    text-align: center;
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .chat-container {
+      height: calc(100vh - 180px); /* Increased offset to account for recipients bar on mobile */
+      border-radius: 0;
+      margin-bottom: 0;
+    }
+    
+    .message-received .media-body,
+    .message-sent .media-body {
+      max-width: 85%;
+    }
+
+    .message-received, .message-sent {
+      margin-bottom: 6px !important; /* Matched original thread mobile spacing */
+    }
+
+    .message-received .card, .message-sent .card {
+      margin-bottom: 0px !important;
+      border-radius: 12px !important; /* Matched thread radii style */
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+    }
+
+    .message-received .card .p-a-1, .message-sent .card .p-a-1 {
+      padding: 10px 14px !important; /* Matched thread padding */
+    }
+
+    .message-received .card p, .message-sent .card p {
+      margin-bottom: 2px !important;
+      font-size: 15px !important; /* Matched thread font size */
+      line-height: 1.55 !important;
+    }
+
+    .chat-image {
+      max-height: 150px !important;
+    }
+
+    .chat-header h4 {
+      font-size: 16px !important;
+    }
+
+    .send-btn-circle {
+      width: 38px !important;
+      height: 38px !important;
+    }
+
+    .send-btn-circle i {
+      font-size: 20px !important;
+    }
+  }
+
+  /* Admin Badge Styling in Select2 */
+  .admin-badge {
+    background-color: #12735a;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    display: inline-block;
+    vertical-align: middle;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .select2-results__option--highlighted .admin-badge {
+    background-color: white;
+    color: #12735a;
+  }
+</style>
+{% endblock scripts %}
+
+{% block content %}
+<div class="layout-content">
+  <ol class="breadcrumb">
+    <li><a href="/courses/">Home</a></li>
+    <li><a href="/forum-private">Forum</a></li>
+    <li class="active">Forum de {{matiere_slug}}</li>
+  </ol>
+
+  <!-- MAIN CHAT CONTAINER -->
+  <div class="chat-container">
+    
+    <!-- CHAT HEADER - FIXED -->
+    <div class="chat-header">
+      <h4>
+        <i class="material-icons" style="vertical-align: middle; font-size: 20px;">forum</i>
+        Forum de discussion privée - Toujours choisir le(s) destinataire(s)
+      </h4>
+    </div>
+
+    <!-- MESSAGES CONTAINER - SCROLLABLE -->
+    <div class="messages-container" id="messagesContainer">
+      {% for message in all_messages %}
+        {% if request.user in message.from_message.all %}
+          <!-- MY SENT MESSAGE - RIGHT ALIGNED -->
+          <div class="media message-sent">
+            <div class="media-left center">
+              {% if request.user.avater %}
+               <img src="{{ request.user.avater.url }}" alt="pic" width="30px" height="35px" style="object-fit: cover;" class="img-circle avatar avatar-xl" width="40">
+              {% else %}
+               <img src="{% static 'dash/assets/images/people/50/avater.png' %}" style="object-fit: cover;" alt="pic" class="img-circle" width="40">
+              {% endif %}
+            </div>
+            <div class="media-body">
+              <div class="card">
+                <div class="p-a-1">
+                   <p style="margin-bottom: 5px;">
+                       <a href="#"><strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong></a>
+                       {% if request.user.is_superuser or request.user.is_staff %}
+                         <span class="admin-badge">Admin</span>
+                       {% endif %}
+                       {% if message.to_message.all %}
+                         à [{%for recipient in message.to_message.all %} {{ recipient.first_name }} {{ recipient.last_name }}{% if recipient.is_superuser or recipient.is_staff %} <span class="admin-badge">Admin</span>{% endif %}{% if not forloop.last %}, {% endif %}{%endfor%}]
+                       {% endif %}
+                       <small class="text-muted">{{message.created_at}}</small>
+                   </p>
+                  {% if message.reply_to %}
+                  <div class="reply-badge">
+                      <span class="reply-user-name">{{ message.reply_to.from_message.first.first_name }}</span>
+                      <p class="reply-msg-text">{{ message.reply_to.message|striptags|truncatechars:100 }}</p>
+                  </div>
+                  {% endif %}
+                  <p>{{message.message|sanitize}}</p>
+
+                  {% if message.image %}
+                  <div class="m-t-1">
+                    <a href="{{ message.image.url }}" target="_blank" class="chat-image-link">
+                        <img src="{{ message.image.url }}" class="chat-image" style="max-height: 200px; border-radius: 8px;" alt="Image">
+                    </a>
+                  </div>
+                  {% endif %}
+
+                  {% if message.fichier %}
+                  <div class="m-t-1">
+                    <a title="Ouvrir le fichier" href="{{ message.fichier.url }}" class="btn btn-primary btn-rounded btn-sm" target="_blank">
+                        <i class="material-icons">get_app</i> <span>Document attaché</span>
+                    </a>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <!-- MESSAGE RECEIVED FROM OTHERS - LEFT ALIGNED -->
+          <div class="media message-received">
+            <div class="media-left center">
+              {% if message.from_message.first.avater %}
+               <img src="{{ message.from_message.first.avater.url }}" alt="pic" width="30px" height="35px" style="object-fit: cover;" class="img-circle avatar avatar-xl" width="40">
+              {% else %}
+               <img src="{% static 'dash/assets/images/people/50/avater.png' %}" style="object-fit: cover;" alt="pic" class="img-circle" width="40">
+              {% endif %}
+            </div>
+            <div class="media-body">
+              <div class="card">
+                  <div class="p-a-1">
+                     <p style="margin-bottom: 5px;">
+                       <a href="#"><strong>{{ message.from_message.first.first_name }} {{ message.from_message.first.last_name }}</strong></a>
+                       {% if message.from_message.first.is_superuser or message.from_message.first.is_staff %}
+                         <span class="admin-badge">Admin</span>
+                       {% endif %}
+                       <small class="text-muted">{{message.created_at}}</small>
+                     </p>
+                    {% if message.reply_to %}
+                    <div class="reply-badge">
+                        <span class="reply-user-name">{{ message.reply_to.from_message.first.first_name }}</span>
+                        <p class="reply-msg-text">{{ message.reply_to.message|striptags|truncatechars:100 }}</p>
+                    </div>
+                    {% endif %}
+                    <p>{{message.message|sanitize}}</p>
+
+                    {% if message.image %}
+                    <div class="m-t-1">
+                      <a href="{{ message.image.url }}" target="_blank" class="chat-image-link">
+                          <img src="{{ message.image.url }}" class="chat-image" style="max-height: 200px; border-radius: 8px;" alt="Image">
+                      </a>
+                    </div>
+                    {% endif %}
+
+                    {% if message.fichier %}
+                    <div class="m-t-1">
+                      <a title="Ouvrir le fichier" href="{{ message.fichier.url }}" class="btn btn-primary btn-rounded btn-sm" target="_blank">
+                          <i class="material-icons">get_app</i> <span>Document attaché</span>
+                      </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- REPLY BUTTON ONLY ON RECEIVED MESSAGES -->
+                    <div class="m-t-1">
+                      <button type="button" class="btn btn-sm btn-link text-muted p-0" onclick="initiateReply('{{ message.id }}', '{{ message.from_message.first.first_name }}', '{{ message.message|striptags|escapejs }}', '{{ message.from_message.first.id }}')">
+                          <i class="material-icons" style="font-size: 18px; vertical-align: middle;">reply</i> Répondre
+                      </button>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- INPUT CONTAINER - FIXED AT BOTTOM -->
+    <div class="input-container-fixed">
+      <form id="form" action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.reply_to }}
+        
+        <!-- Recipients Selector -->
+        <div class="recipients-bar">
+          <label for="id_to_message" class="recipients-label">
+            <i class="material-icons" style="font-size: 14px; vertical-align: middle;">people</i>
+            Destinataire(s)
+          </label>
+          {{ form.to_message }}
+        </div>
+
+        <!-- Reply Info Bar -->
+        <div id="replyInfoBar" class="reply-info-bar">
+            <div class="reply-info-content">
+                <span class="reply-user" id="replyUserName"></span>
+                <span class="reply-text-preview" id="replyTextPreview"></span>
+            </div>
+            <i class="material-icons close-reply" onclick="cancelReply()">cancel</i>
+        </div>
+
+        <!-- File Preview Bar -->
+        <div id="filePreviewBar" class="file-preview-bar" style="display: none;">
+            <div class="preview-item" id="imagePreviewItem" style="display: none;">
+                <div class="preview-thumbnail">
+                    <img id="imagePreviewImg" src="" alt="preview">
+                </div>
+                <span class="file-name" id="imageName"></span>
+                <i class="material-icons remove-preview" onclick="clearInput('id_image')">cancel</i>
+            </div>
+            <div class="preview-item" id="filePreviewItem" style="display: none;">
+                <div class="preview-thumbnail">
+                    <i class="material-icons">insert_drive_file</i>
+                </div>
+                <span class="file-name" id="fileName"></span>
+                <i class="material-icons remove-preview" onclick="clearInput('id_fichier')">cancel</i>
+            </div>
+        </div>
+
+        <!-- WhatsApp Input Area -->
+        <div class="whatsapp-input-container">
+            <div class="attachment-btn-wrapper">
+                <div class="attachment-btn" id="attachmentToggle">
+                    <i class="material-icons">attach_file</i>
+                </div>
+                <div class="attachment-menu" id="attachmentMenu">
+                    <button type="button" class="menu-item" onclick="triggerInput('id_image')">
+                        <i class="material-icons">image</i> <span>Image</span>
+                    </button>
+                    <button type="button" class="menu-item" onclick="triggerInput('id_fichier')">
+                        <i class="material-icons">insert_drive_file</i> <span>Document</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="message-input-wrapper">
+                <textarea 
+                    name="message" 
+                    id="id_message" 
+                    class="message-textarea" 
+                    placeholder="Écrivez votre message..."
+                    rows="1"></textarea>
+            </div>
+
+            <!-- Hidden file inputs -->
+            <div class="hidden-form-elements">
+                {{ form.image }}
+                {{ form.fichier }}
+            </div>
+
+            <button type="submit" class="send-btn-circle">
+                <i class="material-icons">send</i>
+            </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Bottom Action -->
+  <div class="bottom-actions">
+    <a class="btn btn-primary" href="/">
+      <i class="material-icons" style="vertical-align: middle;">home</i>
+      Retour à la page d'accueil
+    </a>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/select2/select2.min.js' %}"></script>
+<script>
+  $(document).ready(function() {
+    // Initialize Select2 with custom templates for secure admin display
+    function formatRecipient(state) {
+        if (!state.id) return state.text;
+        
+        var $state = $('<span>' + state.text + '</span>');
+        
+        // Check for data-is-admin attribute added by the custom Django widget
+        var isAdmin = $(state.element).data('is-admin');
+        
+        if (isAdmin) {
+            $state.append(' <span class="admin-badge">Admin</span>');
+        }
+        
+        return $state;
+    };
+
+    $('#id_to_message').select2({
+        placeholder: "Sélectionner le/les destinataire(s)",
+        width: '100%',
+        templateResult: formatRecipient,
+        templateSelection: formatRecipient,
+        escapeMarkup: function(m) { return m; }
+    });
+
+    // Auto-grow textarea
+    const textarea = document.getElementById('id_message');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+    }
+
+    // Toggle attachment menu
+    $('#attachmentToggle').on('click', function(e) {
+        e.stopPropagation();
+        $('#attachmentMenu').fadeToggle(200).css('display', 'flex');
+    });
+
+    // Close menu when clicking outside
+    $(document).on('click', function() {
+        $('#attachmentMenu').fadeOut(200);
+    });
+
+    $('#attachmentMenu').on('click', function(e) {
+        e.stopPropagation();
+    });
+
+    // Auto-scroll to bottom of messages container
+    function scrollToBottom() {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    // Run on ready and on window load
+    scrollToBottom();
+    window.addEventListener('load', scrollToBottom);
+
+    // Scroll to bottom after form submission
+    $('#form').on('submit', function() {
+        setTimeout(scrollToBottom, 100);
+    });
+  });
+
+  // Function to trigger hidden file inputs
+  function triggerInput(id) {
+      document.getElementById(id).click();
+      $('#attachmentMenu').fadeOut(200);
+  }
+
+  // Reply Functionality with auto-select sender
+  function initiateReply(messageId, userName, messageText, senderId) {
+      // Set reply_to hidden field
+      $('#id_reply_to').val(messageId);
+      
+      // Update reply info bar
+      $('#replyUserName').text(userName);
+      $('#replyTextPreview').text(messageText);
+      $('#replyInfoBar').css('display', 'flex');
+      
+      // Auto-select the sender in the recipients dropdown
+      if (senderId) {
+          var currentValues = $('#id_to_message').val() || [];
+          if (!currentValues.includes(senderId)) {
+              currentValues.push(senderId);
+              $('#id_to_message').val(currentValues).trigger('change');
+          }
+      }
+      
+      // Focus textarea
+      setTimeout(function() {
+          document.getElementById('id_message').focus();
+      }, 100);
+  }
+
+  function cancelReply() {
+      $('#id_reply_to').val('');
+      $('#replyInfoBar').hide();
+  }
+
+  // File Preview Logic
+  document.getElementById('id_image').onchange = function(e) {
+      const file = e.target.files[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+              $('#imagePreviewImg').attr('src', evt.target.result);
+              $('#imageName').text(file.name);
+              $('#imagePreviewItem').show();
+              $('#filePreviewBar').show();
+          };
+          reader.readAsDataURL(file);
+      }
+  };
+
+  document.getElementById('id_fichier').onchange = function(e) {
+      const file = e.target.files[0];
+      if (file) {
+          $('#fileName').text(file.name);
+          $('#filePreviewItem').show();
+          $('#filePreviewBar').show();
+      }
+  };
+
+  function clearInput(id) {
+      const input = document.getElementById(id);
+      input.value = '';
+      if (id === 'id_image') {
+          $('#imagePreviewItem').hide();
+      } else {
+          $('#filePreviewItem').hide();
+      }
+      
+      // Hide bar if both are hidden
+      if ($('#imagePreviewItem').is(':hidden') && $('#filePreviewItem').is(':hidden')) {
+          $('#filePreviewBar').hide();
+      }
+  }
+</script>
+{% endblock extra_js %}

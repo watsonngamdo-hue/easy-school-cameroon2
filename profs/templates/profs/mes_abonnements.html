@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Mes abonnements — EasySchool{% endblock %}
+{% block content %}
+<section class="page-titre"><div class="conteneur"><h1>Mes abonnements</h1><p>Les professeurs que tu suis et la date de fin de chaque abonnement.</p></div></section>
+<section class="section" style="padding-top:32px">
+  <div class="conteneur">
+    {% if abonnements %}
+      <div class="profs-liste">
+        {% for a in abonnements %}
+          <a class="prof-carte" href="{% url 'profs:chaine' a.professeur.slug %}">
+            {% include "profs/_avatar.html" with p=a.professeur %}
+            <span><strong>{{ a.professeur.nom_public }}</strong>
+              {% if a.fin > maintenant %}<small>Actif jusqu'au {{ a.fin|date:"j F Y" }}</small>{% else %}<small style="color:var(--erreur)">Terminé le {{ a.fin|date:"j F Y" }} — renouveler</small>{% endif %}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="encadre">Tu ne suis encore aucun professeur. <a href="{% url 'profs:catalogue' %}">Découvre les cours des professeurs</a>.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

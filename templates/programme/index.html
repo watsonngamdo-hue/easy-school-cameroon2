@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="heros seyes seyes-libre">
+  <div class="conteneur heros-grille">
+    <div class="heros-texte">
+      <h1>Révise ton programme, chapitre par chapitre.</h1>
+      <p class="heros-intro">Cours, exercices corrigés, quiz et anciennes épreuves des collèges et lycées du Cameroun, de la 6e à la Terminale.</p>
+      <div class="heros-actions">
+        {% if user.is_authenticated %}
+          <a class="btn btn-encre" href="{% url 'programme:level' %}">Continuer mes révisions</a>
+        {% else %}
+          <a class="btn btn-encre" href="{% url 'account_signup' %}">Créer mon compte gratuit</a>
+        {% endif %}
+        <a class="btn btn-contour" href="{% url 'depot:accueil' %}">
+          <svg class="icone" aria-hidden="true"><use href="#i-envoyer"/></svg>Déposer une épreuve
+        </a>
+      </div>
+      <p class="heros-note">Paiement par Orange Money ou MTN Mobile Money. 1 000 FCFA offerts à l'inscription.</p>
+    </div>
+
+    <figure class="copie seyes" aria-label="Exemple d'épreuve corrigée">
+      <span class="annotation note" aria-hidden="true">17/20</span>
+      <div class="copie-entete">
+        <span>Lycée de Joss, Douala</span><span>2e séquence</span>
+        <strong>Mathématiques — Terminale C</strong><span>Durée : 2 h</span>
+      </div>
+      <h3>Exercice 1 — Suites numériques</h3>
+      <ol>
+        <li>Montrer que (u<sub>n</sub>) est croissante.</li>
+        <li>En déduire qu'elle converge.</li>
+        <li>Calculer sa limite ℓ.</li>
+      </ol>
+      <span class="annotation commentaire" aria-hidden="true">Bien raisonné !</span>
+    </figure>
+  </div>
+</section>
+
+<div class="conteneur">
+  <div class="chiffres" aria-label="EasySchool en chiffres">
+    {% if stats.niveaux %}<p class="chiffre"><b>{{ stats.niveaux }}</b><span>classes couvertes</span></p>{% endif %}
+    {% if stats.matieres %}<p class="chiffre"><b>{{ stats.matieres }}</b><span>matières</span></p>{% endif %}
+    {% if stats.lecons %}<p class="chiffre"><b>{{ stats.lecons }}</b><span>leçons en ligne</span></p>{% endif %}
+    {% if stats.epreuves %}<p class="chiffre"><b>{{ stats.epreuves }}</b><span>anciennes épreuves</span></p>{% endif %}
+  </div>
+</div>
+
+<section class="section" aria-labelledby="titre-sommaire" style="padding-top:24px">
+  <div class="conteneur">
+    <div class="section-entete">
+      <h2 id="titre-sommaire">Ce que tu trouves dans ton espace</h2>
+      <p>Tout suit le programme officiel camerounais et l'approche par compétences (APC).</p>
+    </div>
+    <ul class="sommaire">
+      <li><div class="ligne"><span class="titre">Cours par chapitre</span><span class="pointilles"></span><span class="ou">Toutes les matières</span>
+        <p class="desc">Chaque leçon en texte, en PDF et parfois en vidéo, rangée dans l'ordre du programme.</p></div></li>
+      <li><div class="ligne"><span class="titre">Exercices corrigés</span><span class="pointilles"></span><span class="ou">Avec solutions détaillées</span>
+        <p class="desc">Des fiches d'exercices pour chaque chapitre, pour t'entraîner à ton rythme.</p></div></li>
+      <li><div class="ligne"><span class="titre">Quiz chronométrés</span><span class="pointilles"></span><span class="ou">Score immédiat</span>
+        <p class="desc">Teste tes connaissances après chaque leçon et suis ta progression.</p></div></li>
+      <li><div class="ligne"><span class="titre">Anciennes épreuves</span><span class="pointilles"></span><span class="ou">Séquences, examens</span>
+        <p class="desc">Les sujets des collèges et lycées de référence pour te préparer au BEPC, au Probatoire et au BAC.</p></div></li>
+      <li><a href="{% url 'profs:catalogue' %}"><span class="titre">Cours des professeurs</span><span class="pointilles"></span><span class="ou">Vidéos et PDF</span>
+        <p class="desc">Des enseignants vérifiés publient leurs cours. Abonne-toi au professeur de ton choix, à partir de 500 F par mois.</p></a></li>
+      <li><div class="ligne"><span class="titre">Forum par matière</span><span class="pointilles"></span><span class="ou">Élèves et enseignants</span>
+        <p class="desc">Pose ta question sur un exercice et reçois l'aide de ta classe et de nos enseignants.</p></div></li>
+      <li><div class="ligne"><span class="titre">Assistant IA</span><span class="pointilles"></span><span class="ou">24 h/24</span>
+        <p class="desc">Il t'explique une notion, vérifie un raisonnement ou analyse la photo d'un exercice.</p></div></li>
+    </ul>
+  </div>
+</section>
+
+<section class="tableau section" aria-labelledby="titre-depot">
+  <div class="conteneur tableau-grille">
+    <div>
+      <p class="craie" aria-hidden="true">+25 F</p>
+      <h2 id="titre-depot">Tu as une épreuve de classe ? Partage-la.</h2>
+      <p>Chaque épreuve qui n'est pas encore dans notre base est mise en ligne tout de suite pour les élèves de ta classe et te rapporte 25 FCFA, versés sur ton solde EasySchool. Tu peux t'en servir pour ton abonnement ou tes crédits IA.</p>
+      <a class="btn btn-clair" href="{% url 'depot:accueil' %}">
+        <svg class="icone" aria-hidden="true"><use href="#i-envoyer"/></svg>Déposer une épreuve
+      </a>
+    </div>
+    <ol class="etapes">
+      <li><div><strong>Photographie ou scanne l'épreuve</strong>Une photo nette prise au téléphone suffit, ou un PDF.</div></li>
+      <li><div><strong>Indique la classe, la matière et l'établissement</strong>Ces informations permettent aux autres élèves de la retrouver.</div></li>
+      <li><div><strong>Elle est en ligne, tu reçois 25 F</strong>Si l'épreuve est déjà dans la base, l'envoi est refusé et rien n'est versé.</div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="titre-faq">
+  <div class="conteneur">
+    <div class="section-entete"><h2 id="titre-faq">Questions fréquentes</h2></div>
+    <div class="faq">
+      <details>
+        <summary>Comment payer mon abonnement ?</summary>
+        <p>Recharge ton solde par Orange Money ou MTN Mobile Money depuis ton espace, puis choisis la classe à laquelle tu veux t'abonner. 1 000 FCFA donnent 30 jours d'accès.</p>
+      </details>
+      <details>
+        <summary>Est-ce que je peux m'inscrire dans plusieurs classes ?</summary>
+        <p>Oui. Chaque classe a son propre abonnement, que tu peux gérer depuis la page Abonnement de ton espace.</p>
+      </details>
+      <details>
+        <summary>Pourquoi mon épreuve a-t-elle été refusée ?</summary>
+        <p>Une épreuve ne peut être envoyée qu'une seule fois. Si le même fichier, le même sujet ou la même évaluation du même établissement existe déjà, l'envoi est refusé.</p>
+      </details>
+      <details>
+        <summary>Le site fonctionne-t-il sur téléphone ?</summary>
+        <p>Oui, toutes les pages sont pensées d'abord pour le téléphone et restent légères pour économiser ta connexion.</p>
+      </details>
+    </div>
+  </div>
+</section>
+{% endblock content %}

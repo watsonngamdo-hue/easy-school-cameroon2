@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: easyschool_db
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: easyschool_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru
+
+  web:
+    build: .
+    container_name: easyschool_web
+    restart: unless-stopped
+    env_file: .env          # (manquait : le conteneur web ne recevait aucun secret)
+    command: sh -c "python manage.py migrate --noinput && python manage.py configurer_site && python manage.py completer_programme && python manage.py proteger_fichiers && gunicorn Elearning.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 2 --timeout 120"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - private_volume:/app/private_media
+    ports:
+      - "127.0.0.1:8000:8000"   # accessible uniquement via nginx, plus directement depuis Internet
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  celery:
+    build: .
+    command: celery -A Elearning worker --loglevel=info
+    env_file: .env
+    volumes:
+      - media_volume:/app/media
+      - private_volume:/app/private_media
+    depends_on: [db, redis]
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  private_volume:

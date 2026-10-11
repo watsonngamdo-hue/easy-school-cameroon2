@@ -1,0 +1,1 @@
+{% if p.photo %}<img class="avatar{% if grand %} grand{% endif %}" src="{{ p.photo.url }}" alt="" width="{% if grand %}96{% else %}56{% endif %}" height="{% if grand %}96{% else %}56{% endif %}">{% else %}<span class="avatar{% if grand %} grand{% endif %}" aria-hidden="true">{{ p.nom_public|slice:":1"|upper }}</span>{% endif %}

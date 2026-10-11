@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Cours des professeurs — EasySchool{% endblock %}
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur">
+    <h1>Les cours des professeurs</h1>
+    <p>Des enseignants à l'identité vérifiée publient leurs cours en vidéo et en PDF. Abonne-toi à un professeur pour suivre tous ses cours pendant 30 jours.</p>
+    <p style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px">
+      {% if mon_profil %}<a class="btn btn-encre" href="{% url 'profs:studio' %}">Mon studio de professeur</a>
+      {% else %}<a class="btn btn-contour" href="{% url 'profs:devenir' %}">Tu es enseignant ? Publie tes cours</a>{% endif %}
+      {% if user.is_authenticated %}<a class="btn btn-contour" href="{% url 'profs:mes_abonnements' %}">Mes abonnements</a>{% endif %}
+    </p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:32px">
+  <div class="conteneur">
+    <div class="barre-filtres">
+      <nav class="puces-filtre" aria-label="Filtrer par classe">
+        <a href="?{% if q %}q={{ q|urlencode }}{% endif %}" {% if not niveau_slug %}aria-current="true"{% endif %}>Toutes les classes</a>
+        {% for n in niveaux %}<a href="?classe={{ n.slug }}{% if q %}&q={{ q|urlencode }}{% endif %}" {% if niveau_slug == n.slug %}aria-current="true"{% endif %}>{{ n.abrege }}</a>{% endfor %}
+      </nav>
+      <form class="recherche" method="get" role="search">
+        {% if niveau_slug %}<input type="hidden" name="classe" value="{{ niveau_slug }}">{% endif %}
+        <label class="sr-only" for="q">Rechercher</label>
+        <input id="q" type="search" name="q" value="{{ q }}" placeholder="Professeur, matière, chapitre…">
+        <button class="btn btn-encre" type="submit">Chercher</button>
+      </form>
+    </div>
+
+    {% if profs %}
+      <h2>Professeurs</h2>
+      <div class="profs-liste">
+        {% for p in profs %}
+          <a class="prof-carte" href="{% url 'profs:chaine' p.slug %}">
+            {% include "profs/_avatar.html" with p=p %}
+            <span>
+              <strong>{{ p.nom_public }}</strong>
+              <small>{{ p.matieres_texte }}</small>
+              <small><span class="prix">{{ p.prix_mensuel }} F / mois</span> · {{ p.nb_cours }} cours</small>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <h2>Cours</h2>
+    {% if page_cours %}
+      <div class="cours-grille">{% for c in page_cours %}{% include "profs/_cours_carte.html" %}{% endfor %}</div>
+      {% if page_cours.has_other_pages %}
+        <p style="margin-top:24px;display:flex;gap:12px">
+          {% if page_cours.has_previous %}<a class="btn btn-contour" href="?page={{ page_cours.previous_page_number }}{% if niveau_slug %}&classe={{ niveau_slug }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">Page précédente</a>{% endif %}
+          {% if page_cours.has_next %}<a class="btn btn-contour" href="?page={{ page_cours.next_page_number }}{% if niveau_slug %}&classe={{ niveau_slug }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">Page suivante</a>{% endif %}
+        </p>
+      {% endif %}
+    {% else %}
+      <p class="encadre">Aucun cours ne correspond pour l'instant.{% if not mon_profil %} Tu enseignes cette matière ? <a href="{% url 'profs:devenir' %}">Publie le premier cours</a>.{% endif %}</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

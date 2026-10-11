@@ -1,0 +1,22 @@
+{% extends "account/base.html" %}
+{% block head_title %}Connexion{% endblock %}
+
+{% block content %}
+<h2>Connexion</h2>
+<p class="sous-titre">Content de te revoir ! Connecte-toi pour continuer tes révisions.</p>
+{% include "account/_erreurs.html" %}
+<form method="post" action="{% url 'account_login' %}">
+  {% csrf_token %}
+  {% for field in form %}
+    {% if field.name == 'remember' %}
+      <label class="case" style="margin-bottom:18px">{{ field }} Rester connecté sur cet appareil</label>
+    {% else %}
+      {% include "account/_champ.html" %}
+    {% endif %}
+  {% endfor %}
+  {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+  <button class="btn btn-encre btn-bloc" type="submit">Se connecter</button>
+</form>
+<p style="margin-top:16px"><a href="{% url 'account_reset_password' %}">Mot de passe oublié ?</a></p>
+<p class="auth-pied">Pas encore de compte ? <a href="{{ signup_url }}">Créer un compte</a></p>
+{% endblock %}

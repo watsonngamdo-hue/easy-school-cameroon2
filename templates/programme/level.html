@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Classes — EasySchool Cameroun{% endblock %}
+
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur">
+    <h1>Choisis ta classe</h1>
+    <p>Tu accèdes aux cours des classes choisies à ton inscription ou auxquelles tu t'es abonné.</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:40px">
+  <div class="conteneur">
+    {% if user.is_authenticated %}
+      {% with mes_classes=user.classe.all %}
+      {% if not mes_classes %}
+        <p class="message" style="margin-bottom:24px">Tu n'as encore choisi aucune classe. Abonne-toi à une classe depuis la page <a href="{% url 'programme:billing' %}">Abonnement</a>.</p>
+      {% endif %}
+      {% endwith %}
+    {% endif %}
+    <div class="classes">
+      {% for level in levels %}
+        <a class="classe" href="{% url 'programme:student_dashboard' level.slug %}">
+          <span class="classe-abrege annotation">{{ level.abrege }}</span>
+          <span class="classe-nom">{{ level.libelle }}</span>
+          <span>{{ level.repere }}</span>
+          <span class="classe-info">
+            {% if user.is_authenticated and level in user.classe.all %}Ta classe — ouvrir le tableau de bord{% else %}{{ level.matieres.count }} matière{{ level.matieres.count|pluralize }}{% endif %}
+          </span>
+        </a>
+      {% empty %}
+        <p style="padding:24px">Les classes seront bientôt disponibles.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock content %}

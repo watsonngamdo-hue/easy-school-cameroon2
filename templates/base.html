@@ -1,0 +1,142 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EasySchool Cameroun — cours, exercices et épreuves du secondaire{% endblock %}</title>
+  <meta name="description" content="{% block description %}Cours, exercices corrigés, quiz et anciennes épreuves pour les élèves du secondaire au Cameroun, de la 6e à la Terminale.{% endblock %}">
+  <meta name="theme-color" content="#0b5c47">
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="EasySchool Cameroun">
+  <meta property="og:description" content="Cours, exercices corrigés, quiz et anciennes épreuves pour les élèves du secondaire au Cameroun.">
+  <meta property="og:locale" content="fr_CM">
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+  <link rel="apple-touch-icon" href="{% static 'img/logo/apple-touch-icon.png' %}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo/logo-512.png' %}">
+  <link rel="preload" href="{% static 'fonts/es/young-serif-latin-400-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/es/atkinson-hyperlegible-latin-400-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/es.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% include "includes/icones.html" %}
+  <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+
+  {% url 'programme:programme' as url_accueil %}
+  {% url 'programme:about' as url_about %}
+  {% url 'programme:level' as url_level %}
+  {% url 'programme:contact' as url_contact %}
+  {% url 'depot:accueil' as url_depot %}
+
+  <header class="entete">
+    <div class="conteneur entete-barre">
+      <a class="logo" href="{{ url_accueil }}" aria-label="EasySchool Cameroun, accueil">
+        <img class="logo-img" src="{% static 'img/logo/logo-128.png' %}" srcset="{% static 'img/logo/logo-128.png' %} 1x, {% static 'img/logo/logo-256.png' %} 2x" width="44" height="44" alt=""><span class="logo-texte"><span class="logo-mot">EasySchool</span><span class="logo-pays">Cameroun</span></span>
+      </a>
+      <button class="menu-bouton" type="button" aria-expanded="false" aria-controls="nav-panneau" data-menu>
+        <svg class="icone" aria-hidden="true"><use href="#i-menu"/></svg><span class="sr-only">Menu</span>
+      </button>
+      <div class="nav-panneau" id="nav-panneau">
+        <nav class="nav" aria-label="Navigation principale">
+          <a href="{{ url_accueil }}" {% if request.path == url_accueil %}aria-current="page"{% endif %}>Accueil</a>
+          <a href="{{ url_level }}" {% if request.path == url_level %}aria-current="page"{% endif %}>Classes</a>
+          <a href="{% url 'profs:catalogue' %}" {% if '/profs/' in request.path %}aria-current="page"{% endif %}>Professeurs</a>
+          <a href="{{ url_about }}" {% if request.path == url_about %}aria-current="page"{% endif %}>À propos</a>
+          <a href="{{ url_contact }}" {% if request.path == url_contact %}aria-current="page"{% endif %}>Contact</a>
+          <a class="nav-depot" href="{{ url_depot }}">Déposer une épreuve</a>
+        </nav>
+        <div class="nav-actions">
+          {% if user.is_authenticated %}
+            <a class="btn btn-encre" href="{{ url_level }}">Mon espace</a>
+          {% else %}
+            <a class="btn btn-contour" href="{% url 'account_login' %}">Se connecter</a>
+            <a class="btn btn-encre" href="{% url 'account_signup' %}">Créer mon compte</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {% if messages %}
+    <ul class="messages" role="status">
+      {% for message in messages %}<li class="message {{ message.tags }}">{{ message }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  <main id="contenu">
+    {% block content %}{% endblock content %}
+  </main>
+
+  <footer class="pied">
+    <div class="conteneur pied-grille">
+      <div>
+        <a class="logo" href="{{ url_accueil }}"><img class="logo-img" src="{% static 'img/logo/logo-128.png' %}" srcset="{% static 'img/logo/logo-128.png' %} 1x, {% static 'img/logo/logo-256.png' %} 2x" width="56" height="56" alt=""><span class="logo-texte"><span class="logo-mot">EasySchool</span><span class="logo-pays">Cameroun</span></span></a>
+        <p style="margin-top:12px">Les cours, exercices et épreuves du secondaire camerounais, au même endroit et disponibles sur téléphone.</p>
+        {% if social_links %}
+        <div class="reseaux">
+          {% if social_links.facebook %}<a href="{{ social_links.facebook }}" rel="noopener" target="_blank" aria-label="Facebook"><svg class="icone"><use href="#i-facebook"/></svg></a>{% endif %}
+          {% if social_links.youtube %}<a href="{{ social_links.youtube }}" rel="noopener" target="_blank" aria-label="YouTube"><svg class="icone"><use href="#i-youtube"/></svg></a>{% endif %}
+          {% if social_links.instagram %}<a href="{{ social_links.instagram }}" rel="noopener" target="_blank" aria-label="Instagram"><svg class="icone"><use href="#i-instagram"/></svg></a>{% endif %}
+          {% if social_links.tiktok %}<a href="{{ social_links.tiktok }}" rel="noopener" target="_blank" aria-label="TikTok"><svg class="icone"><use href="#i-lien"/></svg></a>{% endif %}
+          {% if social_links.linkedin %}<a href="{{ social_links.linkedin }}" rel="noopener" target="_blank" aria-label="LinkedIn"><svg class="icone"><use href="#i-lien"/></svg></a>{% endif %}
+          {% if social_links.twitter %}<a href="{{ social_links.twitter }}" rel="noopener" target="_blank" aria-label="X (Twitter)"><svg class="icone"><use href="#i-lien"/></svg></a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      <div>
+        <h2>Le site</h2>
+        <ul>
+          <li><a href="{{ url_level }}">Classes et cours</a></li>
+          <li><a href="{{ url_depot }}">Déposer une épreuve</a></li>
+          <li><a href="{% url 'profs:catalogue' %}">Cours des professeurs</a></li>
+          <li><a href="{% url 'profs:devenir' %}">Devenir professeur</a></li>
+          <li><a href="{{ url_about }}">À propos</a></li>
+          <li><a href="{{ url_contact }}">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Nous joindre</h2>
+        <ul>
+          <li><a href="tel:+237620325046">+237 620 32 50 46</a></li>
+          <li><a href="https://wa.me/237620325046" rel="noopener" target="_blank">WhatsApp</a></li>
+          <li><a href="mailto:easyschoolcameroon@gmail.com">easyschoolcameroon@gmail.com</a></li>
+          <li>Douala, Cameroun</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Newsletter</h2>
+        <p>Nouveaux cours et épreuves, une fois par mois.</p>
+        <form class="newsletter" action="{{ url_accueil }}" method="post">
+          {% csrf_token %}
+          <label class="sr-only" for="nl-email">Adresse e-mail</label>
+          <input id="nl-email" name="email" type="email" required autocomplete="email" placeholder="ton@email.com">
+          <button class="btn btn-surligneur" type="submit">S'inscrire</button>
+        </form>
+      </div>
+    </div>
+    <div class="conteneur pied-bas">
+      <span>© {% now "Y" %} EasySchool Cameroun. Tous droits réservés.</span>
+      <span><a href="{{ url_contact }}">Signaler un problème</a></span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var bouton = document.querySelector("[data-menu]");
+      var panneau = document.getElementById("nav-panneau");
+      if (!bouton || !panneau) return;
+      bouton.addEventListener("click", function () {
+        var ouvert = panneau.classList.toggle("ouvert");
+        bouton.setAttribute("aria-expanded", ouvert ? "true" : "false");
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && panneau.classList.contains("ouvert")) {
+          panneau.classList.remove("ouvert"); bouton.setAttribute("aria-expanded", "false"); bouton.focus();
+        }
+      });
+    })();
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,183 @@
+{% extends "depot/base.html" %}
+
+{% block content %}
+<section class="depot-heros">
+  <div class="conteneur" style="padding-bottom:40px">
+    <h1>Envoie une épreuve de ta classe et gagne 25 F.</h1>
+    <p>Chaque épreuve nouvelle est mise en ligne tout de suite dans la banque d'épreuves de ta classe, et 25 FCFA sont versés sur ton solde.
+      {% if total_epreuves %}Déjà {{ total_epreuves }} épreuve{{ total_epreuves|pluralize }} reçue{{ total_epreuves|pluralize }}.{% endif %}</p>
+  </div>
+</section>
+
+<div class="conteneur depot-grille">
+  <div class="feuille">
+    {% if user.is_authenticated %}
+      <h2>Déposer une épreuve</h2>
+      <p class="sous-titre">Tous les champs sont obligatoires. Ils permettent aux autres élèves de retrouver l'épreuve.</p>
+
+      {% if messages %}
+        {% for message in messages %}
+          {% if resultat == "doublon" %}
+            <div class="tampon" role="alert"><span class="marque">Déjà reçue</span><p>{{ message }} Aucun montant n'a été versé.</p></div>
+          {% else %}
+            <div class="message {{ message.tags }}" role="alert" style="margin-bottom:18px">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if form.errors %}
+        <div class="erreurs-form" role="alert">
+          <ul>
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            {% for field in form %}{% for error in field.errors %}<li>{{ field.label }} : {{ error }}</li>{% endfor %}{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" id="form-depot" novalidate>
+        {% csrf_token %}
+        <div class="champ{% if form.fichier.errors %} invalide{% endif %}">
+          <span class="libelle" id="lib-fichier">{{ form.fichier.label }}</span>
+          <label class="depose" id="zone-depot" aria-labelledby="lib-fichier">
+            <svg class="icone" aria-hidden="true"><use href="#i-envoyer"/></svg>
+            <span class="invite"><strong>Choisis une photo ou un PDF</strong><br><span class="aide">ou glisse le fichier ici — {{ taille_max|default:"10" }} Mo maximum</span></span>
+            <span class="choisi" id="nom-fichier"></span>
+            <img class="apercu" id="apercu" alt="Aperçu de l'épreuve">
+            <input type="file" name="fichier" id="id_fichier" required accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+          </label>
+        </div>
+
+        <div class="champ{% if form.titre.errors %} invalide{% endif %}">
+          <label for="id_titre">{{ form.titre.label }}</label>{{ form.titre }}
+        </div>
+        <div class="grille-2">
+          <div class="champ{% if form.niveau.errors %} invalide{% endif %}"><label for="id_niveau">{{ form.niveau.label }}</label>{{ form.niveau }}</div>
+          <div class="champ{% if form.matiere.errors %} invalide{% endif %}"><label for="id_matiere">{{ form.matiere.label }}</label>{{ form.matiere }}</div>
+        </div>
+        <div class="champ{% if form.etablissement.errors %} invalide{% endif %}">
+          <label for="id_etablissement">{{ form.etablissement.label }}</label>{{ form.etablissement }}
+        </div>
+        <div class="grille-2">
+          <div class="champ{% if form.type_evaluation.errors %} invalide{% endif %}"><label for="id_type_evaluation">{{ form.type_evaluation.label }}</label>{{ form.type_evaluation }}</div>
+          <div class="champ{% if form.annee_scolaire.errors %} invalide{% endif %}"><label for="id_annee_scolaire">{{ form.annee_scolaire.label }}</label>{{ form.annee_scolaire }}</div>
+        </div>
+        <label class="case" style="margin:4px 0 22px">{{ form.certification }} {{ form.certification.label }}</label>
+        <button class="btn btn-tableau btn-bloc" type="submit" id="btn-envoyer">
+          <svg class="icone" aria-hidden="true"><use href="#i-envoyer"/></svg>Envoyer l'épreuve
+        </button>
+      </form>
+    {% else %}
+      <h2>Connecte-toi pour déposer une épreuve</h2>
+      <p class="sous-titre">Les 25 F sont versés sur le solde de ton compte EasySchool : il te faut donc un compte pour envoyer une épreuve.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:20px">
+        <a class="btn btn-tableau" href="{% url 'account_login' %}?next={{ request.path|urlencode }}">Se connecter</a>
+        <a class="btn btn-contour" href="{% url 'account_signup' %}?next={{ request.path|urlencode }}">Créer un compte gratuit</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <aside>
+    {% if user.is_authenticated %}
+      <div class="solde-carte seyes">
+        <p class="etiquette">Ton solde EasySchool</p>
+        <p class="montant">{{ user.somme }} F</p>
+        <dl>
+          <dt>Épreuves envoyées</dt><dd>{{ stats.envoyees }}</dd>
+          <dt>Gagné grâce aux épreuves</dt><dd>{{ gains }} F</dd>
+          {% if stats.rejetees %}<dt>Épreuves rejetées</dt><dd>{{ stats.rejetees }}</dd>{% endif %}
+        </dl>
+      </div>
+    {% endif %}
+    <div class="regles feuille">
+      <h3>Ce qui est accepté</h3>
+      <ul>
+        <li><svg class="icone ok" aria-hidden="true"><use href="#i-ok"/></svg><span>Les épreuves de séquence, de trimestre, les examens blancs et officiels, les devoirs.</span></li>
+        <li><svg class="icone ok" aria-hidden="true"><use href="#i-ok"/></svg><span>Un PDF ou une photo nette et complète, prise de face (JPG, PNG ou WEBP).</span></li>
+        <li><svg class="icone non" aria-hidden="true"><use href="#i-fermer"/></svg><span>Une épreuve déjà présente dans la base : même fichier, même sujet, ou même évaluation du même établissement la même année.</span></li>
+        <li><svg class="icone non" aria-hidden="true"><use href="#i-fermer"/></svg><span>Un document flou, incomplet ou qui n'est pas une épreuve : il sera retiré de la banque et les 25 F repris.</span></li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+{% if user.is_authenticated %}
+<section class="conteneur" style="padding-bottom:72px" aria-labelledby="titre-envois">
+  <div class="feuille">
+    <h2 id="titre-envois">Mes envois</h2>
+    {% if mes_epreuves %}
+      <table class="envois">
+        <thead><tr><th scope="col">Épreuve</th><th scope="col">Statut</th><th scope="col">Gain</th><th scope="col">Envoyée le</th></tr></thead>
+        <tbody>
+          {% for e in mes_epreuves %}
+            <tr>
+              <td><span class="titre-envoi">{{ e.titre }}</span><br><span class="meta">{{ e.niveau.libelle }} · {{ e.matiere.nom }} · {{ e.etablissement }} · {{ e.annee_scolaire }}</span></td>
+              <td>{% if e.publication_id %}<span class="statut statut-validee">En ligne</span>{% else %}<span class="statut statut-{{ e.statut }}">{{ e.get_statut_display }}</span>{% endif %}</td>
+              <td><span class="gain{% if e.statut == 'rejetee' %} perdu{% endif %}">+{{ e.recompense }} F</span></td>
+              <td class="col-date meta">{{ e.date_envoi|date:"j M Y à H:i" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="vide">Tu n'as encore envoyé aucune épreuve. La première te rapporte 25 F !</p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_authenticated %}
+<script>
+(function () {
+  var zone = document.getElementById("zone-depot");
+  var input = document.getElementById("id_fichier");
+  var nom = document.getElementById("nom-fichier");
+  var apercu = document.getElementById("apercu");
+  var maxOctets = {{ taille_max|default:"10" }} * 1024 * 1024;
+
+  function afficher(fichier) {
+    if (!fichier) { zone.classList.remove("a-fichier"); apercu.classList.remove("visible"); return; }
+    zone.classList.add("a-fichier");
+    var taille = (fichier.size / 1024 / 1024).toFixed(1).replace(".", ",");
+    nom.textContent = fichier.name + " (" + taille + " Mo)";
+    if (fichier.size > maxOctets) { nom.textContent += " — trop lourd"; }
+    if (fichier.type && fichier.type.indexOf("image/") === 0) {
+      apercu.src = URL.createObjectURL(fichier); apercu.classList.add("visible");
+    } else { apercu.classList.remove("visible"); }
+  }
+  input.addEventListener("change", function () { afficher(input.files[0]); });
+  ["dragenter", "dragover"].forEach(function (t) { zone.addEventListener(t, function () { zone.classList.add("survol"); }); });
+  ["dragleave", "drop"].forEach(function (t) { zone.addEventListener(t, function () { zone.classList.remove("survol"); }); });
+
+  // Filtre des matières selon la classe choisie.
+  var niveau = document.getElementById("id_niveau");
+  var matiere = document.getElementById("id_matiere");
+  function chargerMatieres() {
+    if (!niveau.value) return;
+    var choix = matiere.value;
+    fetch("{% url 'depot:matieres' 0 %}".replace("/0/", "/" + encodeURIComponent(niveau.value) + "/"), { headers: { "Accept": "application/json" } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        matiere.innerHTML = "";
+        var vide = document.createElement("option"); vide.value = ""; vide.textContent = "Choisir la matière"; matiere.appendChild(vide);
+        data.matieres.forEach(function (m) {
+          var o = document.createElement("option"); o.value = m.id; o.textContent = m.nom;
+          if (String(m.id) === choix) o.selected = true;
+          matiere.appendChild(o);
+        });
+      }).catch(function () {});
+  }
+  niveau.addEventListener("change", chargerMatieres);
+  chargerMatieres();
+
+  // Empêche le double clic (double envoi) pendant le téléversement.
+  var form = document.getElementById("form-depot");
+  var bouton = document.getElementById("btn-envoyer");
+  form.addEventListener("submit", function () {
+    bouton.disabled = true; bouton.lastChild.textContent = "Envoi en cours…";
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

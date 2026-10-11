@@ -1,0 +1,604 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+{% load safe_html %}
+
+{% block scripts %}
+<style>
+  /* MAIN CHAT CONTAINER - FIXED HEIGHT WITH SCROLLABLE MESSAGES */
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px);
+    background: #e5ddd5;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+
+  /* CHAT HEADER - FIXED AT TOP */
+  .chat-header {
+    background: linear-gradient(135deg, #12735a 0%, #0b5c47 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+
+  .chat-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  /* MESSAGES CONTAINER - SCROLLABLE */
+  .messages-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    background: #e5ddd5;
+    background-image: 
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255,255,255,.03) 10px,
+        rgba(255,255,255,.03) 20px
+      );
+  }
+
+  /* Custom Scrollbar */
+  .messages-container::-webkit-scrollbar { width: 6px; }
+  .messages-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+  .messages-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+  /* INPUT CONTAINER - FIXED AT BOTTOM */
+  .input-container-fixed {
+    flex-shrink: 0;
+    background: #f0f2f5;
+    border-top: 1px solid #e0e6ed;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  }
+
+  /* Reply Info Bar */
+  .reply-info-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #e4f3ed;
+    border-left: 4px solid #12735a;
+    margin: 0;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .reply-info-content { display: flex; flex-direction: column; overflow: hidden; }
+  .reply-user { font-weight: 600; color: #12735a; }
+  .reply-text-preview { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #64748b; }
+  .close-reply { cursor: pointer; color: #64748b; margin-left: 10px; }
+  .close-reply:hover { color: #ef4444; }
+
+  /* Reply Badge in Message */
+  .reply-badge {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.05);
+    border-left: 3px solid #12735a;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+  .reply-badge .reply-user-name { font-weight: 600; color: #12735a; margin-bottom: 2px; }
+  .reply-badge .reply-msg-text { color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+
+  /* WhatsApp Style Input */
+  .whatsapp-input-container {
+    display: flex;
+    align-items: center;
+    background: #f0f2f5;
+    padding: 4px 15px;
+    gap: 8px;
+    position: relative;
+    z-index: 100;
+  }
+
+  .msg-content-pad {
+    padding: 6px 10px !important;
+  }
+  
+  .message-input-wrapper {
+    flex-grow: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 8px 15px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .attachment-btn {
+    color: #54656f;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+  }
+
+  .attachment-menu {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    padding: 8px 0;
+    z-index: 1000;
+    min-width: 160px;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    width: 100%;
+    gap: 12px;
+    color: #3b4a54;
+    font-size: 14px;
+  }
+
+  .send-btn-circle {
+    background-color: #12735a !important;
+    color: white !important;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 0;
+  }
+
+  /* MESSAGE ALIGNMENT */
+  .message-received {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 2px;
+  }
+  .message-received .media-body { max-width: 75%; }
+  .message-received .card {
+    background-color: #fff;
+    border-radius: 12px 12px 12px 4px;
+    border: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .message-sent {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 2px;
+  }
+  .message-sent .media-body { max-width: 75%; }
+  .message-sent .card {
+    background-color: #dcf8c6;
+    border-radius: 12px 12px 4px 12px;
+    border: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .message-sent .media-left { order: 2; margin-left: 10px; margin-right: 0; }
+  .message-sent .media-body { order: 1; }
+
+  /* ── DESKTOP AVATARS: smaller ── */
+  .media-left.center img.avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* File Preview Bar */
+  .file-preview-bar {
+    display: none;
+    gap: 10px;
+    padding: 10px 20px;
+    background: white;
+    border-bottom: 1px solid #e0e6ed;
+  }
+  
+  .preview-item {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px 10px;
+    gap: 8px;
+  }
+
+  .message-textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    resize: none;
+    outline: none;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 24px;
+    max-height: 120px;
+  }
+
+  /* ═══════════════════════════════════════════
+     MOBILE — bigger cards, bigger text
+  ═══════════════════════════════════════════ */
+  @media (max-width: 768px) {
+
+    /* 1. Main container */
+    .chat-container {
+      height: calc(100vh - 140px); /* Increased offset to fit exactly on mobile */
+      border-radius: 0;
+      margin-bottom: 0; /* Remove margin to finish at endpoint of page */
+    }
+
+    /* 2. Header */
+    .chat-header { padding: 10px 15px; }
+    .chat-header h4 { font-size: 15px; }
+
+    /* 3. Messages area padding */
+    .messages-container {
+      padding: 10px 10px !important;
+    }
+
+    /* 4. Gaps between bubbles */
+    .message-received,
+    .message-sent {
+      margin-bottom: 6px !important;
+      align-items: flex-end;
+    }
+
+    /* 5. Bubble width — wider so text wraps less */
+    .message-received .media-body,
+    .message-sent .media-body {
+      max-width: 88%;
+    }
+
+    .message-received .card,
+    .message-sent .card {
+      margin-bottom: 0 !important;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    }
+
+    /* 6. Internal card padding — more breathing room */
+    .msg-content-pad {
+      padding: 10px 14px !important;
+    }
+
+    /* 7. Message body text — noticeably larger */
+    .msg-content-pad p {
+      font-size: 15px !important;
+      line-height: 1.55;
+      margin-bottom: 2px !important;
+    }
+
+    /* 8. Sender name + timestamp row */
+    .msg-content-pad p:first-child {
+      font-size: 12px !important;
+      margin-bottom: 4px !important;
+    }
+
+    /* 9. Hide avatars on mobile */
+    .media-left.center {
+      display: none !important;
+    }
+
+    /* 10. Reply badge text */
+    .reply-badge {
+      padding: 6px 10px;
+      margin-bottom: 6px;
+    }
+    .reply-badge .reply-user-name { font-size: 13px; }
+    .reply-badge .reply-msg-text { font-size: 12px; }
+
+    /* 11. Attached image */
+    .m-t-1 { margin-top: 8px !important; }
+
+    /* 12. Reply button */
+    .msg-content-pad .btn-link {
+      font-size: 13px;
+    }
+
+    /* 13. Input area */
+    .whatsapp-input-container { padding: 6px 10px; }
+    .message-input-wrapper {
+      padding: 6px 14px;
+      min-height: 38px;
+    }
+    .message-textarea { font-size: 15px; }
+    .send-btn-circle { width: 40px; height: 40px; }
+    .attachment-btn { font-size: 22px; }
+  }
+
+  /* Admin Badge Styling */
+  .admin-badge {
+    background-color: #12735a;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    display: inline-block;
+    vertical-align: middle;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+</style>
+{% endblock scripts %}
+
+{% block content %}
+<div class="layout-content">
+
+    <ol class="breadcrumb">
+      <li><a href="/courses/">Home</a></li>
+      <li><a href="/forum-private">Forum</a></li>
+      <li class="active">Forum de {{matiere_slug}}</li>
+    </ol>
+
+    <!-- MAIN CHAT CONTAINER -->
+    <div class="chat-container">
+      
+      <!-- CHAT HEADER - FIXED -->
+      <div class="chat-header">
+        <h4>
+          <i class="material-icons" style="vertical-align: middle; font-size: 20px;">forum</i>
+          Forum {{matiere_slug}} ({{niveau_slug}})
+        </h4>
+      </div>
+
+      <!-- MESSAGES CONTAINER - SCROLLABLE -->
+      <div class="messages-container" id="messagesContainer">
+        {% for message in messages %}
+          {% if message.user == request.user %}
+            <!-- MY SENT MESSAGE - RIGHT ALIGNED -->
+            <div class="media message-sent">
+              <div class="media-left center">
+                {% if message.user.avater %}
+                 <img src="{{ message.user.avater.url }}" alt="pic" width="28px" height="28px" style="object-fit: cover;" class="img-circle avatar avatar-xl">
+                {% else %}
+                 <img src="{% static 'dash/assets/images/people/50/avater.png' %}" style="object-fit: cover;" width="28px" height="28px" alt="pic" class="img-circle avatar avatar-xl">
+                {% endif %}
+              </div>
+              <div class="media-body">
+                <div class="card">
+                  <div class="msg-content-pad">
+                    <p style="margin-bottom: 2px;">
+                        <a href="#"><strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong></a>
+                        {% if request.user.is_superuser or request.user.is_staff %}
+                          <span class="admin-badge">Admin</span>
+                        {% endif %}
+                        <small class="text-muted">{{message.created_at}}</small>
+                    </p>
+                    {% if message.reply_to %}
+                    <div class="reply-badge">
+                        <span class="reply-user-name">{{ message.reply_to.user.first_name }}</span>
+                        <p class="reply-msg-text">{{ message.reply_to.message|striptags|truncatechars:100 }}</p>
+                    </div>
+                    {% endif %}
+                    <p>{{message.message|sanitize}}</p>
+
+                    {% if message.image %}
+                    <div class="m-t-1">
+                      <a href="{{ message.image.url }}" target="_blank">
+                          <img src="{{ message.image.url }}" style="max-width: 100%; border-radius: 8px; max-height: 200px;" alt="">
+                      </a>
+                    </div>
+                    {% endif %}
+
+                    {% if message.fichier %}
+                    <div class="m-t-1">
+                      <a href="{{ message.fichier.url }}" class="btn btn-primary btn-rounded btn-sm" target="_blank">
+                          <i class="material-icons">get_app</i> <span>Document attaché</span>
+                      </a>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <!-- MESSAGE RECEIVED FROM OTHERS - LEFT ALIGNED -->
+            <div class="media message-received">
+              <div class="media-left center">
+                {% if message.user.avater %}
+                 <img src="{{ message.user.avater.url }}" alt="pic" width="28px" height="28px" style="object-fit: cover;" class="img-circle avatar avatar-xl">
+                {% else %}
+                 <img src="{% static 'dash/assets/images/people/50/avater.png' %}" style="object-fit: cover;" width="28px" height="28px" alt="pic" class="img-circle avatar avatar-xl">
+                {% endif %}
+              </div>
+              <div class="media-body">
+                <div class="card">
+                    <div class="msg-content-pad">
+                      <p style="margin-bottom: 5px;">
+                        <a href="#"><strong>{{ message.user.first_name }} {{ message.user.last_name }}</strong></a>
+                        {% if message.user.is_superuser or message.user.is_staff %}
+                          <span class="admin-badge">Admin</span>
+                        {% endif %}
+                        <small class="text-muted">{{message.created_at}}</small>
+                      </p>
+                      {% if message.reply_to %}
+                      <div class="reply-badge">
+                          <span class="reply-user-name">{{ message.reply_to.user.first_name }}</span>
+                          <p class="reply-msg-text">{{ message.reply_to.message|striptags|truncatechars:100 }}</p>
+                      </div>
+                      {% endif %}
+                      <p>{{message.message|sanitize}}</p>
+
+                      {% if message.image %}
+                      <div class="m-t-1">
+                        <a href="{{ message.image.url }}" target="_blank">
+                            <img src="{{ message.image.url }}" style="max-width: 100%; border-radius: 8px; max-height: 200px;" alt="">
+                        </a>
+                      </div>
+                      {% endif %}
+
+                      {% if message.fichier %}
+                      <div class="m-t-1">
+                        <a href="{{ message.fichier.url }}" class="btn btn-primary btn-rounded btn-sm" target="_blank">
+                            <i class="material-icons">get_app</i> <span>Document attaché</span>
+                        </a>
+                      </div>
+                      {% endif %}
+                      
+                      <div class="m-t-1">
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0" onclick="initiateReply('{{ message.id }}', '{{ message.user.first_name }}', '{{ message.message|striptags|escapejs }}')">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle;">reply</i> Répondre
+                        </button>
+                      </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- INPUT CONTAINER - FIXED AT BOTTOM -->
+      <div class="input-container-fixed">
+        <form id="form" action="" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.reply_to }}
+          
+          <!-- Reply Info Bar -->
+          <div id="replyInfoBar" class="reply-info-bar">
+              <div class="reply-info-content">
+                  <span class="reply-user" id="replyUserName"></span>
+                  <span class="reply-text-preview" id="replyTextPreview"></span>
+              </div>
+              <i class="material-icons close-reply" onclick="cancelReply()">cancel</i>
+          </div>
+
+          <!-- File Preview Bar -->
+          <div id="filePreviewBar" class="file-preview-bar">
+              <div class="preview-item" id="imagePreviewItem" style="display: none;">
+                  <span class="file-name" id="imageName"></span>
+                  <i class="material-icons remove-preview" onclick="clearInput('id_image')">cancel</i>
+              </div>
+              <div class="preview-item" id="filePreviewItem" style="display: none;">
+                  <span class="file-name" id="fileName"></span>
+                  <i class="material-icons remove-preview" onclick="clearInput('id_fichier')">cancel</i>
+              </div>
+          </div>
+
+          <!-- WhatsApp Input Area -->
+          <div class="whatsapp-input-container">
+              <div class="attachment-btn-wrapper">
+                  <div class="attachment-btn" id="attachmentToggle">
+                      <i class="material-icons">attach_file</i>
+                  </div>
+                  <div class="attachment-menu" id="attachmentMenu">
+                      <button type="button" class="menu-item" onclick="triggerInput('id_image')">
+                          <i class="material-icons">image</i> <span>Image</span>
+                      </button>
+                      <button type="button" class="menu-item" onclick="triggerInput('id_fichier')">
+                          <i class="material-icons">insert_drive_file</i> <span>Document</span>
+                      </button>
+                  </div>
+              </div>
+
+              <div class="message-input-wrapper">
+                  <textarea name="message" id="id_message" class="message-textarea" placeholder="Écrivez votre message..." rows="1"></textarea>
+              </div>
+
+              <div style="display: none !important;">
+                  {{ form.image }}
+                  {{ form.fichier }}
+              </div>
+
+              <button type="submit" class="send-btn-circle">
+                  <i class="material-icons">send</i>
+              </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-right p-b-2">
+      <a class="btn btn-white" href="/">Retour à l'accueil</a>
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+  $(document).ready(function() {
+    // Auto-grow textarea
+    const textarea = document.getElementById('id_message');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+    }
+
+    // Toggle attachment menu
+    $('#attachmentToggle').on('click', function(e) {
+        e.stopPropagation();
+        $('#attachmentMenu').fadeToggle(200).css('display', 'flex');
+    });
+
+    $(document).on('click', function() { $('#attachmentMenu').fadeOut(200); });
+
+    // Scroll to bottom
+    const scrollToBottom = () => {
+        const container = document.getElementById('messagesContainer');
+        if (container) container.scrollTop = container.scrollHeight;
+    };
+    scrollToBottom();
+    window.addEventListener('load', scrollToBottom);
+
+    // Handle file inputs
+    $('#id_image, #id_fichier').on('change', function() {
+        const isImg = this.id === 'id_image';
+        const name = this.files[0] ? this.files[0].name : '';
+        if (name) {
+            $('#filePreviewBar').css('display', 'flex');
+            $(`#${isImg ? 'image' : 'file'}PreviewItem`).show();
+            $(`#${isImg ? 'image' : 'file'}Name`).text(name);
+        }
+    });
+  });
+
+  function triggerInput(id) { document.getElementById(id).click(); }
+  function clearInput(id) {
+      const input = document.getElementById(id);
+      input.value = '';
+      $(`#${id === 'id_image' ? 'image' : 'file'}PreviewItem`).hide();
+      if (!$('#imagePreviewItem').is(':visible') && !$('#filePreviewItem').is(':visible')) {
+          $('#filePreviewBar').hide();
+      }
+  }
+
+  function initiateReply(id, user, text) {
+      $('#id_reply_to').val(id);
+      $('#replyUserName').text(user);
+      $('#replyTextPreview').text(text);
+      $('#replyInfoBar').css('display', 'flex');
+      $('#id_message').focus();
+  }
+
+  function cancelReply() {
+      $('#id_reply_to').val('');
+      $('#replyInfoBar').hide();
+  }
+</script>
+{% endblock extra_js %}

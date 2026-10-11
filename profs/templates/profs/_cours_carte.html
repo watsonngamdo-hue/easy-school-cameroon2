@@ -1,0 +1,8 @@
+<a class="cours-carte" href="{% url 'profs:cours' c.slug %}">
+  {% if c.miniature %}<img class="vignette" src="{{ c.miniature.url }}" alt="" loading="lazy">{% else %}<span class="vignette" aria-hidden="true">{{ c.titre|truncatechars:40 }}</span>{% endif %}
+  <span class="corps">
+    <h3>{{ c.titre }}</h3>
+    <span class="meta">{{ c.professeur.nom_public }}</span>
+    <span class="meta">{{ c.niveau }}{% if c.matiere %} · {{ c.matiere.nom_court }}{% endif %} · {{ c.nb_lecons }} leçon{{ c.nb_lecons|pluralize }}</span>
+  </span>
+</a>

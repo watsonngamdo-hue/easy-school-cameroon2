@@ -1,0 +1,47 @@
+/* Habillage de l'espace élève aux couleurs du nouveau site (sans toucher à la grille AdminPlus). */
+@font-face { font-family: "Young Serif"; src: url("../fonts/es/young-serif-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Atkinson"; src: url("../fonts/es/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Atkinson"; src: url("../fonts/es/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Caveat"; src: url("../fonts/es/caveat-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+
+body, .btn, .form-control, input, select, textarea, .sidebar, .navbar { font-family: "Atkinson", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+h1, h2, h3, h4, .card-title, .page-heading { font-family: "Young Serif", Georgia, serif; font-weight: 400 !important; letter-spacing: -0.01em; }
+body { background: #f3f8f5; color: #15241f; }
+a { color: #12735a; }
+.btn-primary, .bg-primary { background-color: #12735a !important; border-color: #12735a !important; }
+.btn-primary:hover { background-color: #0a4a3a !important; }
+.text-primary { color: #12735a !important; }
+.card { border-radius: 10px; border-color: #dce3f0; }
+:focus-visible { outline: 3px solid #ffe066 !important; outline-offset: 2px; }
+
+.es-logo { display: inline-flex !important; align-items: center; gap: 8px; text-decoration: none !important; padding-top: 8px; }
+.es-logo-img { width: 38px; height: 38px; border-radius: 50%; flex: none; }
+.es-logo-mot { font-family: "Young Serif", Georgia, serif; font-size: 1.35rem; color: #fff; }
+.es-logo-pays { font-family: "Caveat", cursive; font-size: 1.1rem; color: #ffe066; }
+.es-pastille { background: #ffe066 !important; color: #16213a !important; font-weight: 700; border-radius: 999px; padding: 2px 8px; font-size: .75rem; }
+.es-nav-depot { font-weight: 700; }
+.es-sidebar-depot .sidebar-menu-button { color: #0f5c4a !important; font-weight: 700; }
+.es-sidebar-depot .sidebar-menu-icon { color: #0f5c4a !important; }
+
+/* Vert EasySchool sur les composants du thème AdminPlus */
+.navbar.bg-primary, .navbar-dark.bg-primary { background: linear-gradient(135deg, #0b5c47 0%, #083d30 100%) !important; }
+.btn-info, .bg-info, .label-info { background-color: #2a9d7c !important; border-color: #2a9d7c !important; }
+.label-primary, .tag-primary, .badge-primary, .progress-bar, .page-item.active .page-link { background-color: #12735a !important; border-color: #12735a !important; }
+.text-info { color: #2a9d7c !important; }
+.sidebar-menu-item.active { background-color: #e4f3ed !important; }
+.sidebar-menu-item.active .sidebar-menu-button, .sidebar-menu-item.active .sidebar-menu-icon, .sidebar-menu-item:hover .sidebar-menu-icon { color: #12735a !important; }
+.btn-custom-voir { background: #12735a !important; color: #fff !important; border-color: #12735a !important; }
+.nav-tabs .nav-link.active, .nav-tabs .nav-item.open .nav-link { color: #12735a !important; border-bottom-color: #12735a !important; }
+progress::-webkit-progress-value { background: #12735a; }
+
+.es-nav-profs { font-weight: 700; color: #ffe066 !important; }
+.es-carte-profs { border-left: 4px solid #12735a; }
+.es-cours-prof { display: flex; gap: 10px; align-items: flex-start; text-decoration: none !important; color: #15241f !important; }
+.es-cours-prof .material-icons { color: #12735a; margin-top: 2px; }
+.es-cours-prof small { color: #4a5d55; }
+.dropdown-divider { height: 1px; margin: 6px 0; background: #d5e4dd; }
+
+@media (max-width: 600px) {
+  .es-salut, .es-logo-pays { display: none !important; }
+  .es-logo-mot { font-size: 1.15rem; }
+}

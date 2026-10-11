@@ -1,0 +1,319 @@
+{% extends "dash/base.html" %} {% block content %}
+
+<div class="layout-content" data-scrollable>
+  <div class="container-fluid">
+    <ol class="breadcrumb hidden-print">
+      <li><a href="#">Home</a></li>
+      <li class="active">Dashboard</li>
+    </ol>
+    <div class="row">
+    <div class="row m-b-1">
+        <div class="col-sm-12 text-right">
+            <!-- Create Pack Button -->
+            <button type="button" class="btn btn-success m-r-1" data-toggle="modal" data-target="#createPackModal">
+                <i class="material-icons">add_circle</i> Créer un Pack
+            </button>
+            <!-- AI Settings Button -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#aiSettingsModal">
+                <i class="material-icons">settings</i> Paramètres IA & Coûts
+            </button>
+        </div>
+    </div>
+
+    <!-- AI Settings Modal -->
+    <style>
+        .modal-dialog {
+            margin-top: 10vh; /* Push down to approximate center */
+        }
+        @media (min-width: 576px) {
+            .modal-dialog {
+                max-width: 600px;
+                margin: 10vh auto; /* Center horizontally and push down */
+            }
+        }
+    </style>
+    <div class="modal fade" id="aiSettingsModal" tabindex="-1" role="dialog" aria-labelledby="aiSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="aiSettingsModalLabel">Configuration IA</h4>
+                </div>
+                <form method="POST">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <!-- Credits & Costs -->
+                        <h5 class="m-b-1">Crédits & Coûts</h5>
+                        <div class="form-group row">
+                            <label class="col-sm-4 form-control-label">Crédits journaliers</label>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" name="default_daily_credits" value="{{ ai_settings.default_daily_credits }}">
+                                <small class="text-muted">Offerts chaque jour</small>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 form-control-label">Coût Message Texte</label>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" name="text_message_cost" value="{{ ai_settings.text_message_cost }}">
+                                <small class="text-muted">Crédits par message</small>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 form-control-label">Coût Image</label>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" name="image_generation_cost" value="{{ ai_settings.image_generation_cost }}">
+                                <small class="text-muted">Crédits par image</small>
+                            </div>
+                        </div>
+
+                        <hr>
+                        
+                        <!-- AI Model Config -->
+                        <h5 class="m-b-1">Modèles & Clés API</h5>
+                        <div class="form-group row">
+                            <label class="col-sm-4 form-control-label">Modèle de Texte</label>
+                            <div class="col-sm-8">
+                                <select class="form-control" name="text_model">
+                                    <option value="deepseek" {% if ai_settings.text_model == 'deepseek' %}selected{% endif %}>DeepSeek-V3</option>
+                                    <option value="gpt-4o" {% if ai_settings.text_model == 'gpt-4o' %}selected{% endif %}>GPT-4o</option>
+                                    <option value="gpt-4o-mini" {% if ai_settings.text_model == 'gpt-4o-mini' %}selected{% endif %}>GPT-4o Mini</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 form-control-label">Clé DeepSeek</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" name="deepseek_api_key" value="" autocomplete="off" placeholder="{% if ai_settings.deepseek_api_key %}•••••• (clé configurée — saisir pour remplacer){% else %}sk-...{% endif %}">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 form-control-label">Clé OpenAI</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" name="openai_api_key" value="" autocomplete="off" placeholder="{% if ai_settings.openai_api_key %}•••••• (clé configurée — saisir pour remplacer){% else %}sk-...{% endif %}">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 form-control-label">Clé Gemini</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" name="gemini_api_key" value="" autocomplete="off" placeholder="{% if ai_settings.gemini_api_key %}•••••• (clé configurée — saisir pour remplacer){% else %}AIza...{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                        <button type="submit" name="update_ai_settings" class="btn btn-primary">Enregistrer les modifications</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+      <div class="row">
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-header bg-white">
+            <h4 class="card-title">Statistique</h4>
+            <p class="card-subtitle">Dernier 30 Jour</p>
+          </div>
+          <div class="card-block">
+            <ul class="list-group list-group-fit m-b-0">
+              <li class="list-group-item">
+                <div class="media">
+                  <div class="media-body media-middle">
+                    <a href="take-course.html">Nombre d'utilisateur</a>
+                  </div>
+                  <div class="media-right media-middle">
+                    <div class="center">
+                      <span class="label label-pill label-primary"
+                        >{{etudiant}}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="list-group-item">
+                <div class="media">
+                  <div class="media-body media-middle">
+                    <a href="take-course.html">Nombre de classes</a>
+                  </div>
+                  <div class="media-right media-middle">
+                    <div class="center">
+                      <span class="label label-pill label-danger"
+                        >{{niveaux}}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="list-group-item">
+                <div class="media">
+                  <div class="media-body media-middle">
+                    <a href="">Nombre total de matieres</a>
+                  </div>
+                  <div class="media-right media-middle">
+                    <div class="center">
+                      <span class="label label-pill label-info"
+                        >{{matieres}}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="list-group-item">
+                <div class="media">
+                  <div class="media-body media-middle">
+                    <a href="">Nombre total de Lessons</a>
+                  </div>
+                  <div class="media-right media-middle">
+                    <div class="center">
+                      <span class="label label-pill label-warning"
+                        >{{lecons}}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header bg-white">
+            <h4 class="card-title">5 dernieres Transactions</h4>
+          </div>
+          <table class="table text-subhead v-middle">
+            <tbody>
+              {% for trans in transaction %}
+              <tr>
+                <td>
+                  <div class="label label-default">{{trans.date_pay}}</div>
+                </td>
+                <td>{{trans.user.first_name}} {{trans.user.last_name}}</td>
+                <td>{{trans.niveau}}</td>
+                <td class="center">{{trans.montant}}FCFA</td>
+              </tr>
+              {% endfor%}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-header bg-white">
+            <div class="media">
+              <div class="media-body">
+                <h4 class="card-title">Derniere Instriptions</h4>
+                <p class="card-subtitle"></p>
+              </div>
+              <div class="media-right media-middle">
+                <a class="btn btn-white" href="#"> Manage</a>
+              </div>
+            </div>
+          </div>
+          <ul class="list-group list-group-fit m-b-0">
+            {% for student in new_students %}
+
+            <li class="list-group-item">
+              <div class="media">
+                <div class="media-body media-middle">
+                  <a href="take-course.html"
+                    >{{student.first_name}} {{student.last_name}}</a
+                  >
+                </div>
+                <div class="media-right media-middle">
+                  <div class="center">
+                    <span class="label label-pill label-primary"
+                      >Le solde est de {{student.somme}} FCFA.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-header bg-white">
+            <div class="pull-xs-right">
+              <a href="#" class="btn btn-primary btn-sm"
+                ><i class="material-icons">keyboard_arrow_left</i></a
+              >
+              <a href="#" class="btn btn-primary btn-sm"
+                ><i class="material-icons">keyboard_arrow_right</i></a
+              >
+            </div>
+            <h4 class="card-title">Derniere Difficult de Paiements</h4>
+          </div>
+          {% for issue in paymentissue %}
+
+          <div class="p-a-1">
+            <div class="pull-xs-right">
+              <small class="text-muted">{{issue.date}}</small>
+            </div>
+            <a href="#">{{issue.user.first_name}} {{issue.user.last_name}}</a>
+            <small class="text-muted">
+              Numero: <a href="#">{{issue.numero}}</a> reference
+              {{issue.reference}}</small
+            >
+            <p style="text-align: center" class="m-b-0">
+              Description: {{issue.description}}
+            </p>
+          </div>
+          {% endfor %}
+          <div class="card-footer">
+            <input type="text" class="form-control" placeholder="Quick Reply" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <!-- Create Pack Modal -->
+    <div class="modal fade" id="createPackModal" tabindex="-1" role="dialog" aria-labelledby="createPackModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="createPackModalLabel">Créer un Nouveau Pack</h4>
+                </div>
+                <form method="POST">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Nom du Pack</label>
+                            <input type="text" class="form-control" name="pack_name" required placeholder="ex: Pack Starter">
+                        </div>
+                        <div class="form-group">
+                            <label>Prix (FCFA)</label>
+                            <input type="number" class="form-control" name="pack_price" required placeholder="ex: 1000">
+                        </div>
+                        <div class="form-group">
+                            <label>Crédits</label>
+                            <input type="number" class="form-control" name="pack_credit" required placeholder="ex: 100">
+                        </div>
+                        <div class="form-group">
+                            <label>Icone (Material Icons)</label>
+                            <select class="form-control" name="pack_icon">
+                                <option value="bolt">Bolt (Éclair)</option>
+                                <option value="star">Star (Étoile)</option>
+                                <option value="diamond">Diamond (Diamant)</option>
+                                <option value="rocket_launch">Rocket (Fusée)</option>
+                                <option value="auto_awesome">Magic (Magique)</option>
+                                <option value="military_tech">Medal (Médaille)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                        <button type="submit" name="create_pack" class="btn btn-success">Créer le Pack</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

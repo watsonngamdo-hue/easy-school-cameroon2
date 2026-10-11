@@ -1,0 +1,55 @@
+{% extends 'dash/base.html' %}
+
+  {% block content %}
+  <!-- Content -->
+  <div class="layout-content" data-scrollable>
+    <div class="container-fluid">
+
+      <ol class="breadcrumb m-b-0">
+        <li><a href="/courses/">Home</a></li>
+        <li class="active">My Courses</li>
+      </ol>
+      <div class="page-heading text-md-right">
+        <div class="btn-group">
+          <a href="#" class="btn btn-white active"><i class="material-icons">list</i></a>
+          <a href="#" class="btn btn-white"><i class="material-icons">dashboard</i></a>
+        </div>
+      </div>
+      <div class="card-columns">
+      {% if refuse %}
+      <div class="card">
+      <center> <h5 class="text-danger">Vous devez payer les frais d'utilisation de ce mois pour avoir accès aux leçons. Cliquez sur ce lien pour les modalités de paiement <a href="/pay">modalités de paiement</a></h5></center> 
+      </div>
+    {% else %}  
+      
+       
+          {% for lesson in lessons %}
+          <div class="card">
+            <div class="card-header bg-white ">
+              <h4 class="card-title"><a href="{% url 'programme:lecon_detail' lesson.niveau.slug lesson.matiere.slug lesson.slug %}">Apprendre {{lesson.nom}} facilement!</a></h4>
+              <small class="text-muted">Lessons: {{lesson.position }} sur {{ total }}</small>
+            </div>
+            <progress class="progress progress-primary progress-striped m-b-0" value="100" max="100">100%</progress>
+            <div class="card-footer bg-white">
+              <a href="{% url 'programme:lecon_detail' lesson.niveau.slug lesson.matiere.slug lesson.slug %}" class="btn btn-primary btn-sm"> Suivre <i
+                  class="material-icons">play_circle_outline</i></a>
+            </div>
+          </div>
+          {% empty %}
+          <h4> Cette matière n'a pas encore de cours, faites-nous confiance, les cours sont en préparation.</h4>
+          {% endfor %}
+
+       {% endif %}
+
+        
+
+       
+
+       
+      </div>
+
+    </div>
+  </div>
+
+  
+  {% endblock content %}

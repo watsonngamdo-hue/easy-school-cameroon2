@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}{% if cours %}{{ cours.titre }}{% else %}Nouveau cours{% endif %} — Mon studio{% endblock %}
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur">
+    <p style="margin:0 0 8px"><a href="{% url 'profs:studio' %}">&larr; Mon studio</a></p>
+    <h1 style="font-size:clamp(1.8rem,4vw,2.6rem)">{% if cours %}{{ cours.titre }}{% else %}Nouveau cours{% endif %}</h1>
+    {% if cours and cours.visible %}<p><a href="{% url 'profs:cours' cours.slug %}">Voir le cours comme un élève</a></p>{% endif %}
+  </div>
+</section>
+<section class="section" style="padding-top:28px">
+  <div class="conteneur deux-colonnes">
+    <div>
+      {% if cours %}
+        <h2>Leçons</h2>
+        {% if lecons %}
+          <ol class="lecons-liste" style="margin-bottom:28px">
+            {% for l in lecons %}
+              <li><div class="ligne-lecon">
+                <svg class="icone" aria-hidden="true"><use href="#{% if l.type == 'video' %}i-lecture{% else %}i-fichier{% endif %}"/></svg>
+                <span><a href="{% url 'profs:lecon' l.pk %}">{{ l.titre }}</a> <span class="aide">· {{ l.vues }} vue{{ l.vues|pluralize }}</span>{% if l.apercu_gratuit %} <span class="etiquette">Aperçu gratuit</span>{% endif %}</span>
+                <form method="post" action="{% url 'profs:studio_supprimer_lecon' l.pk %}">
+                  {% csrf_token %}<button class="btn btn-contour" type="submit" style="min-height:36px;padding:4px 12px">Supprimer</button>
+                </form>
+              </div></li>
+            {% endfor %}
+          </ol>
+        {% else %}<p class="aide">Aucune leçon pour l'instant. Ajoute ta première vidéo ou ton premier PDF.</p>{% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="bloc" id="form-lecon" style="border:1px solid var(--bordure);border-radius:var(--r-2);padding:20px;background:var(--blanc)">
+          {% csrf_token %}
+          <h3>Ajouter une leçon</h3>
+          {% with field=lecon_form.titre %}{% include "profs/_champ.html" %}{% endwith %}
+          <div class="champ"><span class="libelle">Type</span><div class="choix-type">{{ lecon_form.type }}</div></div>
+          <div id="champ-video">{% with field=lecon_form.video %}{% include "profs/_champ.html" %}{% endwith %}<p class="aide" style="margin-top:-10px">MP4 ou WEBM, {{ video_max }} Mo maximum. Conseil : exporte en 720p pour que les élèves la chargent facilement sur téléphone.</p></div>
+          <div id="champ-pdf">{% with field=lecon_form.pdf %}{% include "profs/_champ.html" %}{% endwith %}</div>
+          <div class="grille-2">
+            {% with field=lecon_form.duree_minutes %}{% include "profs/_champ.html" %}{% endwith %}
+            {% with field=lecon_form.ordre %}{% include "profs/_champ.html" %}{% endwith %}
+          </div>
+          {% with field=lecon_form.apercu_gratuit %}{% include "profs/_champ.html" %}{% endwith %}
+          <button class="btn btn-encre" type="submit" name="ajouter_lecon" id="btn-lecon">Ajouter la leçon</button>
+        </form>
+      {% else %}
+        <p class="encadre">Enregistre d'abord les informations du cours, puis ajoute tes leçons.</p>
+      {% endif %}
+    </div>
+    <aside>
+      <form method="post" enctype="multipart/form-data" class="encadre">
+        {% csrf_token %}
+        <h3>Informations du cours</h3>
+        {% for field in form %}{% include "profs/_champ.html" %}{% endfor %}
+        <button class="btn btn-encre btn-bloc" type="submit" name="enregistrer_cours">Enregistrer le cours</button>
+      </form>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function () {
+  var video = document.getElementById("champ-video"), pdf = document.getElementById("champ-pdf");
+  if (!video) return;
+  function maj() {
+    var choix = document.querySelector("input[name=type]:checked");
+    var v = !choix || choix.value === "video";
+    video.hidden = !v; pdf.hidden = v;
+  }
+  document.querySelectorAll("input[name=type]").forEach(function (i) { i.addEventListener("change", maj); });
+  maj();
+  var form = document.getElementById("form-lecon"), btn = document.getElementById("btn-lecon");
+  form.addEventListener("submit", function () { btn.disabled = true; btn.textContent = "Envoi en cours… ne ferme pas la page"; });
+})();
+</script>
+{% endblock %}

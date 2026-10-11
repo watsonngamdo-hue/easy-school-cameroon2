@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { width: 80%; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header { background-color: #f8d7da; color: #721c24; padding: 10px; text-align: center; border-radius: 5px; }
+        .content { margin-top: 20px; }
+        .footer { margin-top: 30px; font-size: 0.8em; color: #777; border-top: 1px solid #eee; padding-top: 10px; }
+        .cta { display: inline-block; background-color: #12735a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🚨 Alerte Quota AI Épuisé 🚨</h2>
+        </div>
+        <div class="content">
+            <p>Bonjour Administrateur,</p>
+            <p>L'assistant IA de <strong>EasySchool Cameroun</strong> a détecté que le quota de l'API est épuisé.</p>
+            <p>
+                <strong>Détails :</strong><br>
+                <ul>
+                    <li><strong>Fournisseur :</strong> {{ provider }}</li>
+                    <li><strong>Modèle :</strong> {{ model_name }}</li>
+                </ul>
+            </p>
+            <p>Les utilisateurs ne peuvent plus utiliser ce modèle actuellement. Veuillez recharger votre compte ou vérifier votre plan de facturation sur le portail du fournisseur.</p>
+            
+            {% if provider == 'GEMINI' %}
+            <a href="https://aistudio.google.com/" class="cta">Vérifier le quota Gemini</a>
+            {% elif provider == 'OPENAI' %}
+            <a href="https://platform.openai.com/usage" class="cta">Vérifier le quota OpenAI</a>
+            {% endif %}
+            
+            <p>Accéder à l'administration du site : <a href="{{ base_url }}admin/">EasySchool Admin</a></p>
+        </div>
+        <div class="footer">
+            Ceci est un message automatique envoyé par le système EasySchool.
+        </div>
+    </div>
+</body>
+</html>

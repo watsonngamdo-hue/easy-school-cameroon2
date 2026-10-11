@@ -1,0 +1,7 @@
+{% extends "account/base.html" %}
+{% block head_title %}Confirme ton e-mail{% endblock %}
+{% block content %}
+<h2>Plus qu'une étape</h2>
+<p class="sous-titre">Nous t'avons envoyé un e-mail de confirmation. Clique sur le lien qu'il contient pour activer ton compte et recevoir ton bonus de 1 000 FCFA.</p>
+<p class="aide">Rien reçu après quelques minutes ? Regarde dans les spams ou <a href="{% url 'programme:contact' %}">contacte-nous</a>.</p>
+{% endblock %}

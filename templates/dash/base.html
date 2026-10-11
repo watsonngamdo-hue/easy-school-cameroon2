@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+{% load static %}
+{% load email_split %}
+
+<html class="bootstrap-layout" lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{% block title %}Mon espace{% endblock %} — EasySchool</title>
+ 
+ 
+
+  <link rel="stylesheet" href="{% static 'vendor/font-awesome/css/font-awesome.min.css' %}">
+  <meta name="robots" content="noindex">
+
+  <!-- Material Design Icons  -->
+  <link href="{% static 'css/material-icons.css' %}" rel="stylesheet">
+
+
+  <!-- App CSS -->
+  <link type="text/css" href="{% static 'dash/assets/css/style.min.css' %}" rel="stylesheet">
+{% block scripts %}
+{% endblock scripts %}
+
+  <link href="{% static 'img/favicon.ico' %}" rel="icon" sizes="any">
+  <link rel="apple-touch-icon" href="{% static 'img/logo/apple-touch-icon.png' %}">
+  
+
+
+    <!-- custom css & js-->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dash-theme.css' %}">
+
+    <style>
+        :root {
+            --primary-color: #12735a;
+            --primary-gradient: linear-gradient(135deg, #12735a 0%, #0a4a3a 100%);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --sidebar-width: 260px;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Glassmorphism Navbar */
+        .navbar.bg-primary {
+            background: var(--primary-gradient) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: var(--transition-smooth);
+        }
+
+        .navbar-brand img {
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-brand:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Sidebar Enhancements */
+        .sidebar-left {
+            background: #ffffff !important;
+            border-right: 1px solid #eef2f6 !important;
+            transition: var(--transition-smooth) !important;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.02) !important;
+        }
+
+        .sidebar-heading {
+            color: #94a3b8 !important;
+            font-weight: 600 !important;
+            letter-spacing: 1.2px !important;
+            padding: 10px 10px 2px !important;
+            font-size: 10px !important;
+            text-transform: uppercase !important;
+        }
+
+        .sidebar-menu-item {
+            margin: 1px 10px !important;
+            border-radius: 8px !important;
+            transition: var(--transition-smooth) !important;
+        }
+
+        .sidebar-menu-button {
+            border-radius: 8px !important;
+            padding: 5px 10px !important;
+            color: #475569 !important;
+            display: flex !important;
+            align-items: center !important;
+            font-size: 0.85rem !important;
+            transition: var(--transition-smooth) !important;
+        }
+
+        .sidebar-menu-icon {
+            margin-right: 10px !important;
+            font-size: 18px !important;
+            color: #64748b !important;
+            transition: var(--transition-smooth) !important;
+        }
+
+        .sidebar-menu-item.active {
+            background-color: #ecf7f2 !important;
+        }
+
+        .sidebar-menu-item.active .sidebar-menu-button {
+            color: var(--primary-color) !important;
+            font-weight: 600 !important;
+        }
+
+        .sidebar-menu-item.active .sidebar-menu-icon {
+            color: var(--primary-color) !important;
+        }
+
+        .sidebar-menu-item:hover {
+            background-color: #f8fafc !important;
+            transform: translateX(5px); /* Interactive lift/slide effect */
+        }
+
+        .sidebar-menu-item:hover .sidebar-menu-icon {
+            color: var(--primary-color) !important;
+        }
+
+        /* Animations */
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .sidebar-menu-item {
+            animation: fadeInRight 0.4s ease forwards;
+        }
+
+        /* Custom Scrollbar for Sidebar */
+        #sidebarLeft::-webkit-scrollbar {
+            width: 4px;
+        }
+        #sidebarLeft::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+
+        /* Modal Styles */
+        .logout-confirm-modal .modal-content {
+            border-radius: 24px !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.4 !important;
+            backdrop-filter: blur(4px) !important;
+        }
+
+        .logout-confirm-modal .modal-header {
+            border-bottom: none !important;
+            padding: 32px 32px 12px !important;
+        }
+
+        .logout-confirm-modal .modal-title {
+            font-weight: 800 !important;
+            color: #1e293b !important;
+            font-size: 1.25rem !important;
+        }
+
+        .logout-confirm-modal .modal-body {
+            padding: 12px 32px 32px !important;
+            color: #64748b !important;
+            font-size: 1rem !important;
+            line-height: 1.6 !important;
+        }
+
+        .logout-confirm-modal .modal-footer {
+            border-top: none !important;
+            padding: 0 32px 32px !important;
+            display: flex !important;
+            gap: 12px !important;
+        }
+
+        .logout-confirm-modal .btn-logout-confirm {
+            background: #ef4444 !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 24px !important;
+            border-radius: 14px !important;
+            font-weight: 700 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3) !important;
+            flex: 1 !important;
+        }
+
+        .logout-confirm-modal .btn-logout-confirm:hover {
+            background: #dc2626 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 20px 25px -5px rgba(239, 68, 68, 0.4) !important;
+        }
+
+        .logout-confirm-modal .btn-logout-cancel {
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+            border: none !important;
+            padding: 12px 24px !important;
+            border-radius: 14px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            flex: 1 !important;
+        }
+
+        .logout-confirm-modal .btn-logout-cancel:hover {
+            background: #e2e8f0 !important;
+            color: #1e293b !important;
+        }
+
+        /* Universal Alerts */
+        .alert-custom {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            border-width: 1px;
+            border-style: solid;
+        }
+        .alert-success { background: #dcfce7 !important; color: #166534 !important; border-color: #bbf7d0 !important; }
+        .alert-danger { background: #fee2e2 !important; color: #b91c1c !important; border-color: #fecaca !important; }
+        .alert-warning { background: #ffedd5 !important; color: #9a3412 !important; border-color: #fed7aa !important; }
+        .alert-info { background: #e4f3ed !important; color: #0a4a3a !important; border-color: #b3d6c8 !important; }
+
+        /* Logout Modal Centering Fix */
+        .logout-confirm-modal .modal-dialog {
+            margin: 20vh auto !important; /* Forces centering from the top */
+            max-width: 400px !important;
+        }
+
+        /* Mobile Layout Scroll Fix */
+        @media (max-width: 991px) {
+            .layout-content, 
+            .pay-container, 
+            .billing-container {
+                padding-bottom: 40px !important; /* Reduced from 150px to eliminate excessive empty space at bottom */
+            }
+        }
+    </style>
+</head>
+
+<body class="layout-container ls-top-navbar si-l3-md-up">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark bg-primary navbar-full navbar-fixed-top">
+
+    <!-- Toggle sidebar -->
+    <button class="navbar-toggler pull-xs-left" type="button" data-toggle="sidebar" data-target="#sidebarLeft"><span class="material-icons">menu</span></button>
+
+    <!-- Brand -->
+    <a href="/" class="navbar-brand es-logo" aria-label="EasySchool, accueil"><img class="es-logo-img" src="{% static 'img/logo/logo-128.png' %}" srcset="{% static 'img/logo/logo-128.png' %} 1x, {% static 'img/logo/logo-256.png' %} 2x" width="38" height="38" alt=""><span class="es-logo-mot">EasySchool</span><span class="es-logo-pays">Cameroun</span></a>
+
+    <ul class="nav navbar-nav hidden-sm-down">
+
+      <!-- Menu -->
+     
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'chatapp:forum-private' %}">Messagerie</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link es-nav-profs" href="{% url 'profs:catalogue' %}">Cours des profs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link es-nav-depot" href="{% url 'depot:accueil' %}">Déposer une épreuve <span class="es-pastille">+25 F</span></a>
+      </li>
+    </ul>
+
+    <!-- Menu -->
+    <ul class="nav navbar-nav pull-xs-right">
+
+      <li class="nav-item es-salut">
+        <a href="{% url 'authapp:editprofile' %}" class="nav-link">
+          <p>Salut {{ request.user.first_name|default:request.user.last_name }}</p>
+        </a>
+      </li> 
+
+      <!-- User dropdown -->
+      <li class="nav-item dropdown">
+        <a class="nav-link active dropdown-toggle p-a-0" data-toggle="dropdown" href="#" role="button" aria-haspopup="false">
+        {% if request.user.avater %}
+         <img src="{{ request.user.avater.url }}" alt="pic" width="30px" height="35px" style="object-fit: cover;" class="img-circle avatar avatar-xl" width="40">
+        {% else %}
+         <img src="{% static 'dash/assets/images/people/50/avater.png' %}"  width="30px" height="35px" style="object-fit: cover;"  alt="" class="img-circle" width="40">
+        {% endif %}
+         
+        </a>
+        <div class="dropdown-menu dropdown-menu-right dropdown-menu-list" aria-labelledby="Preview">
+          <a class="dropdown-item" href="{% url 'profs:catalogue' %}"><i class="material-icons md-18">co_present</i> <span class="icon-text">Cours des professeurs</span></a>
+          <a class="dropdown-item" href="{% url 'profs:mes_abonnements' %}"><i class="material-icons md-18">subscriptions</i> <span class="icon-text">Mes abonnements</span></a>
+          {% if request.user.profil_prof %}<a class="dropdown-item" href="{% url 'profs:studio' %}"><i class="material-icons md-18">video_library</i> <span class="icon-text">Mon studio de professeur</span></a>{% endif %}
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{% url 'authapp:editprofile' %}"><i class="material-icons md-18">person</i> <span class="icon-text">Modifier mon profil</span></a>
+          <a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="material-icons md-18">lock</i> <span class="icon-text">Changer de mot de passe</span></a>
+          <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">Se déconnecter</a>
+        </div>
+      </li>
+      <!-- // END User dropdown -->
+
+    </ul>
+    <!-- // END Menu -->
+
+  </nav>
+  <!-- // END Navbar -->
+  <!-- Sidebar -->
+  <div class="sidebar sidebar-left sidebar-light sidebar-visible-md-up si-si-3 ls-top-navbar-xs-up sidebar-transparent-md" id="sidebarLeft" data-scrollable>
+    <div class="sidebar-heading">APPLICATIONS</div>
+    <ul class="sidebar-menu">
+
+      <li class="sidebar-menu-item">
+        <a class="sidebar-menu-button" href="">
+          <i class="sidebar-menu-icon material-icons">school</i>
+          <span class="sidebar-menu-text">Vos classes</span>
+        </a>
+        <ul class="sidebar-submenu">
+          {% for classe in request.user.classe.all %}
+            <li class="sidebar-menu-item {% if classe.slug in request.path %}active{% endif %}">
+              <a class="sidebar-menu-button" href="/student_dashboard/{{classe.slug}}">
+                {{ classe.libelle }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </li>
+    </ul>
+    <div class="sidebar-heading">Menu</div>
+    <ul class="sidebar-menu">
+      <li class="sidebar-menu-item">
+        <a class="sidebar-menu-button" href="#">
+          <i class="sidebar-menu-icon material-icons">account_balance_wallet</i>
+          <span class="sidebar-menu-text">Mon Solde</span>
+          <span class="sidebar-menu-label bg-success label">{{request.user.somme}} FCFA</span>
+        </a>
+      </li>
+      <li class="sidebar-menu-item {% if '/profs/' in request.path %}active{% endif %}">
+        <a class="sidebar-menu-button" href="{% url 'profs:catalogue' %}">
+          <i class="sidebar-menu-icon material-icons">co_present</i>
+          <span class="sidebar-menu-text">Professeurs</span>
+        </a>
+        <ul class="sidebar-submenu sm-condensed">
+          <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="{% url 'profs:catalogue' %}">Cours des professeurs</a></li>
+          <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="{% url 'profs:mes_abonnements' %}">Mes abonnements</a></li>
+          <li class="sidebar-menu-item"><a class="sidebar-menu-button" href="{% if request.user.profil_prof %}{% url 'profs:studio' %}{% else %}{% url 'profs:devenir' %}{% endif %}">{% if request.user.profil_prof %}Mon studio{% else %}Devenir professeur{% endif %}</a></li>
+        </ul>
+      </li>
+      <li class="sidebar-menu-item es-sidebar-depot">
+        <a class="sidebar-menu-button" href="{% url 'depot:accueil' %}">
+          <i class="sidebar-menu-icon material-icons">upload_file</i>
+          <span class="sidebar-menu-text">Déposer une épreuve</span>
+        </a>
+      </li>
+      <li class="sidebar-menu-item {% if request.path == '/billing/' %}active{% endif %}">
+        <a class="sidebar-menu-button" href="{% url 'programme:billing' %}">
+          <i class="sidebar-menu-icon material-icons">verified_user</i>
+          <span class="sidebar-menu-text">Abonnement</span>
+        </a>
+      </li>
+      <li class="sidebar-menu-item {% if '/ia/' in request.path %}active{% endif %}">
+        <a class="sidebar-menu-button" href="#">
+          <i class="sidebar-menu-icon material-icons">psychology</i>
+          <span class="sidebar-menu-text">IA</span>
+        </a>
+        <ul class="sidebar-submenu sm-condensed">
+          <li class="sidebar-menu-item">
+            <a class="sidebar-menu-button" href="{% url 'aiapp:index' %}">
+              Assistant IA
+            </a>
+          </li>
+          <li class="sidebar-menu-item">
+            <a class="sidebar-menu-button" href="{% url 'aiapp:buy_credits' %}">
+              Acheter Crédits ({{request.user.wallet_credits}})
+            </a>
+          </li>
+        </ul>
+      </li>
+      <li class="sidebar-menu-item {% if '/courses/' in request.path %}active{% endif %}">
+        <a class="sidebar-menu-button" href="/courses/{{slug}}">
+          <i class="sidebar-menu-icon material-icons">library_books</i>
+          <span class="sidebar-menu-text">Tous les cours</span>
+        </a>
+      </li>
+      
+      <li class="sidebar-menu-item {% if request.path == '/editprofile' %}active{% endif %}">
+        <a class="sidebar-menu-button" href="/editprofile">
+          <i class="sidebar-menu-icon material-icons">manage_accounts</i>
+          <span class="sidebar-menu-text">Éditer compte</span>
+        </a>
+      </li>
+    
+      <li class="sidebar-menu-item">
+        <a class="sidebar-menu-button" href="/forum-private">
+          <i class="sidebar-menu-icon material-icons">forum</i>
+          <span class="sidebar-menu-text">Forum privé</span>
+          <span class="sidebar-menu-label label label-default">{% if unread_count > 0 %}{{unread_count}}{% endif %}</span>
+        </a>
+      </li> 
+     
+      <li class="sidebar-menu-item">
+        <a class="sidebar-menu-button" href="#" data-toggle="modal" data-target="#logoutModal">
+          <i class="sidebar-menu-icon material-icons">logout</i>
+          <span class="sidebar-menu-text">Déconnexion</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  
+      
+  
+  {% block content %}
+  
+  {% endblock content %}
+
+
+    <!-- jQuery -->
+    <script src="{% static 'dash/assets/vendor/jquery.min.js' %}"></script>
+
+    <!-- Bootstrap -->
+    <script src="{% static 'dash/assets/vendor/tether.min.js' %}"></script>
+    <script src="{% static 'dash/assets/vendor/bootstrap.min.js' %}"></script>
+  
+    <!-- AdminPlus -->
+    <script src="{% static 'dash/assets/vendor/adminplus.js' %}"></script>
+  
+    <!-- App JS -->
+    <script src="{% static 'dash/assets/js/main.min.js' %}"></script>
+    
+  
+
+
+  <!-- Required by countdown -->
+  <script src="{% static 'dash/assets/vendor/moment.min.js' %}"></script>
+  <!-- Easy Countdown -->
+  <script src="{% static 'dash/assets/vendor/jquery.countdown.min.js' %}"></script>
+
+  <!-- Init -->
+  <script src="{% static 'dash/examples/js/countdown.js' %}"></script>
+
+  <script src="{% static 'dash/assets/vendor/summernote.min.js' %}"></script>
+
+  <!-- Init -->
+  <script src="{% static 'dash/examples/js/summernote.js' %}"></script>
+
+  <!-- jquery -->
+
+{% block extra_js %}
+{% endblock extra_js %}
+
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal fade logout-confirm-modal" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logoutModalLabel">Confirmation</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Êtes-vous sûr de vouloir vous déconnecter de votre session ?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-logout-cancel" data-dismiss="modal">Annuler</button>
+          <form method="post" action="{% url 'account_logout' %}" style="flex:1;display:flex;margin:0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-logout-confirm">Se déconnecter</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </body>
+  
+  </html>

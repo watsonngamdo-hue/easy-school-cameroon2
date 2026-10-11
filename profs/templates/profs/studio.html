@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Mon studio — EasySchool{% endblock %}
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur" style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between">
+    <div style="display:flex;gap:16px;align-items:center">
+      {% include "profs/_avatar.html" with p=profil %}
+      <div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:0">Mon studio</h1><p style="margin:0">{{ profil.nom_public }} · {{ profil.prix_mensuel }} F / mois</p></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn btn-contour" href="{% url 'profs:chaine' profil.slug %}">Voir ma chaîne</a>
+      <a class="btn btn-contour" href="{% url 'profs:devenir' %}">Modifier mon profil</a>
+      <a class="btn btn-encre" href="{% url 'profs:studio_nouveau_cours' %}">Nouveau cours</a>
+    </div>
+  </div>
+</section>
+<section class="section" style="padding-top:28px">
+  <div class="conteneur">
+    {% if profil.statut == 'attente' %}<div class="statut-dossier attente">Identité en cours de vérification (sous 48 h). Tes cours seront visibles par les élèves dès la validation.</div>
+    {% elif profil.statut == 'verifie' %}<div class="statut-dossier verifie">Identité vérifiée : tes cours publiés sont visibles par tous les élèves.</div>
+    {% elif profil.statut == 'refuse' %}<div class="statut-dossier refuse">Dossier refusé : {{ profil.motif_decision }} <a href="{% url 'profs:devenir' %}">Renvoyer mon dossier</a></div>
+    {% elif profil.statut == 'suspendu' %}<div class="statut-dossier suspendu">Compte suspendu : tes cours ne sont plus visibles. Contacte l'équipe EasySchool.</div>
+    {% else %}<div class="statut-dossier brouillon">Dossier incomplet. <a href="{% url 'profs:devenir' %}">Compléter mon dossier</a></div>{% endif %}
+
+    <div class="stats-studio">
+      <div><b>{{ abonnes }}</b><span>abonné{{ abonnes|pluralize }} actif{{ abonnes|pluralize }}</span></div>
+      <div><b>{{ gains }} F</b><span>gagnés au total ({{ part_prof_pct }} % des abonnements)</span></div>
+      <div><b>{{ disponible }} F</b><span>disponibles pour un retrait</span></div>
+      <div><b>{{ en_attente }} F</b><span>disponibles dans moins de {{ delai }} jours</span></div>
+    </div>
+
+    <div class="deux-colonnes">
+      <div>
+        <h2>Mes cours</h2>
+        {% if cours %}
+          <div class="defile-x"><table class="tableau-simple">
+            <thead><tr><th scope="col">Cours</th><th scope="col">Leçons</th><th scope="col">Vues</th><th scope="col">État</th></tr></thead>
+            <tbody>{% for c in cours %}
+              <tr><td><a href="{% url 'profs:studio_cours' c.pk %}">{{ c.titre }}</a><br><span class="aide">{{ c.niveau }}</span></td>
+                <td>{{ c.nb_lecons }}</td><td>{{ c.nb_vues|default:0 }}</td>
+                <td>{% if c.bloque_par_admin %}<span class="statut statut-rejetee">Retiré par l'équipe</span>{% elif c.publie %}<span class="statut statut-validee">Publié</span>{% else %}<span class="statut statut-recue">Brouillon</span>{% endif %}</td></tr>
+            {% endfor %}</tbody>
+          </table></div>
+        {% else %}<p class="encadre">Tu n'as pas encore de cours. <a href="{% url 'profs:studio_nouveau_cours' %}">Crée ton premier cours</a>.</p>{% endif %}
+
+        <h2 style="margin-top:36px">Derniers mouvements</h2>
+        {% if mouvements %}
+          <div class="defile-x"><table class="tableau-simple">
+            <thead><tr><th scope="col">Date</th><th scope="col">Opération</th><th scope="col">Montant</th></tr></thead>
+            <tbody>{% for m in mouvements %}
+              <tr><td class="aide">{{ m.date|date:"j M Y" }}</td><td>{{ m.libelle }}{% if m.montant > 0 and m.disponible_le > maintenant %} <span class="etiquette">retirable le {{ m.disponible_le|date:"j M" }}</span>{% endif %}</td>
+                <td class="{% if m.montant >= 0 %}montant-plus{% else %}montant-moins{% endif %}">{% if m.montant >= 0 %}+{% endif %}{{ m.montant }} F</td></tr>
+            {% endfor %}</tbody>
+          </table></div>
+        {% else %}<p class="aide">Aucun mouvement pour l'instant.</p>{% endif %}
+      </div>
+      <aside>
+        <div class="encadre">
+          <h3>Retirer mes gains</h3>
+          <p class="aide">Vers {{ profil.get_operateur_display }} {{ profil.numero_retrait }}. Minimum {{ minimum }} F, payé sous 72 h.</p>
+          <form method="post" action="{% url 'profs:studio_retrait' %}">
+            {% csrf_token %}
+            <div class="champ"><label for="id_montant">Montant (FCFA)</label><input id="id_montant" name="montant" type="number" min="{{ minimum }}" max="{{ disponible }}" step="100" value="{{ disponible }}" required></div>
+            <button class="btn btn-encre btn-bloc" type="submit" {% if disponible < minimum or profil.statut != 'verifie' %}disabled{% endif %}>Demander le retrait</button>
+          </form>
+        </div>
+        {% if retraits %}
+          <h3 style="margin-top:24px">Mes retraits</h3>
+          <ul class="coordonnees">{% for r in retraits %}
+            <li><span><strong>{{ r.montant }} F</strong> — {{ r.get_statut_display }}<br><span class="aide">{{ r.date|date:"j M Y" }}{% if r.reference_paiement %} · réf. {{ r.reference_paiement }}{% endif %}{% if r.motif_refus %} · {{ r.motif_refus }}{% endif %}</span></span></li>
+          {% endfor %}</ul>
+        {% endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

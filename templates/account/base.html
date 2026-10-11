@@ -1,0 +1,52 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% block head_title %}Mon compte{% endblock %} — EasySchool Cameroun</title>
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+  <link rel="apple-touch-icon" href="{% static 'img/logo/apple-touch-icon.png' %}">
+  <link rel="stylesheet" href="{% static 'css/es.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% include "includes/icones.html" %}
+  <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+  <header class="entete">
+    <div class="conteneur entete-barre">
+      <a class="logo" href="/" aria-label="EasySchool Cameroun, accueil"><img class="logo-img" src="{% static 'img/logo/logo-128.png' %}" srcset="{% static 'img/logo/logo-128.png' %} 1x, {% static 'img/logo/logo-256.png' %} 2x" width="44" height="44" alt=""><span class="logo-texte"><span class="logo-mot">EasySchool</span><span class="logo-pays">Cameroun</span></span></a>
+      <nav class="nav nav-compte" aria-label="Compte">
+        {% if user.is_authenticated %}
+          <a href="{% url 'programme:level' %}">Mon espace</a>
+        {% else %}
+          <a href="{% url 'account_login' %}" {% if request.resolver_match.url_name == 'account_login' %}aria-current="page"{% endif %}>Connexion</a>
+          <a href="{% url 'account_signup' %}" {% if request.resolver_match.url_name == 'account_signup' %}aria-current="page"{% endif %}>Inscription</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenu" class="auth">
+    <div class="auth-cote seyes">
+      {% block auth_cote %}
+        <img class="logo-grand" src="{% static 'img/logo/logo-256.png' %}" width="120" height="120" alt="Logo EasySchool">
+        <h1>Tes cours, tes exercices et tes épreuves, au même endroit.</h1>
+        <p style="color:var(--texte-doux);font-size:1.15rem">De la 6e à la Terminale, selon le programme officiel camerounais.</p>
+        <p class="annotation">1 000 F offerts à l'inscription</p>
+      {% endblock %}
+    </div>
+    <div class="auth-form">
+      <div class="auth-carte">
+        {% if messages %}
+          <ul class="messages" role="status" style="padding:0;margin:0 0 16px">
+            {% for message in messages %}<li class="message {{ message.tags }}">{{ message }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </main>
+  {% block extra_body %}{% endblock %}
+</body>
+</html>

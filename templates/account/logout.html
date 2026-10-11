@@ -1,0 +1,12 @@
+{% extends "account/base.html" %}
+{% block head_title %}Déconnexion{% endblock %}
+{% block content %}
+<h2>Se déconnecter ?</h2>
+<p class="sous-titre">Tu pourras te reconnecter à tout moment avec ton e-mail.</p>
+<form method="post" action="{% url 'account_logout' %}">
+  {% csrf_token %}
+  {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+  <button class="btn btn-encre btn-bloc" type="submit">Se déconnecter</button>
+</form>
+<p class="auth-pied"><a href="{% url 'programme:level' %}">Rester connecté et revenir à mon espace</a></p>
+{% endblock %}

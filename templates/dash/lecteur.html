@@ -1,0 +1,83 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+{% block title %}{{ titre }}{% endblock %}
+{% block content %}
+<style>
+  .lecteur { max-width: 980px; margin: 0 auto; padding: 16px; }
+  .lecteur-barre { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .lecteur-barre h1 { font-size: 1.35rem; margin: 0; }
+  .lecteur-outils { display: flex; gap: 8px; align-items: center; }
+  .lecteur-outils button { border: 1px solid #b3d6c8; background: #fff; color: #0a4a3a; border-radius: 6px; min-width: 40px; height: 40px; font-weight: 700; cursor: pointer; }
+  .lecteur-avis { background: #e4f3ed; color: #0a4a3a; border-radius: 8px; padding: 10px 14px; font-size: .9rem; margin-bottom: 14px; }
+  #pages { display: grid; gap: 14px; justify-items: center; user-select: none; -webkit-user-select: none; }
+  #pages canvas { max-width: 100%; height: auto; box-shadow: 0 2px 10px rgba(8,61,48,.15); background: #fff; }
+  .lecteur-etat { text-align: center; color: #4a5d55; padding: 40px 0; }
+  @media print { body { display: none !important; } }
+</style>
+<div class="layout-content" data-scrollable>
+  <div class="lecteur">
+    <div class="lecteur-barre">
+      <a href="{{ retour }}">&larr; Retour</a>
+      <h1>{{ titre }}</h1>
+      <div class="lecteur-outils">
+        <button type="button" id="zoom-moins" aria-label="Réduire">−</button>
+        <button type="button" id="zoom-plus" aria-label="Agrandir">+</button>
+      </div>
+    </div>
+    <p class="lecteur-avis">Ce document est réservé à ton compte : chaque page porte ton nom. Le partager permettrait d'identifier ton compte, qui serait alors suspendu.</p>
+    <div id="pages" oncontextmenu="return false"><p class="lecteur-etat" id="etat">Chargement du document…</p></div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'vendor/pdfjs/pdf.min.js' %}"></script>
+<script>
+(function () {
+  var conteneur = document.getElementById("pages");
+  var etat = document.getElementById("etat");
+  var echelle = window.innerWidth < 700 ? 1.0 : 1.4;
+  var doc = null;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "{% static 'vendor/pdfjs/pdf.worker.min.js' %}";
+
+  function afficher() {
+    conteneur.innerHTML = "";
+    var ratio = window.devicePixelRatio || 1;
+    var suite = Promise.resolve();
+    for (var n = 1; n <= doc.numPages; n++) {
+      (function (num) {
+        suite = suite.then(function () {
+          return doc.getPage(num).then(function (page) {
+            var vue = page.getViewport({ scale: echelle });
+            var canvas = document.createElement("canvas");
+            canvas.width = Math.floor(vue.width * ratio);
+            canvas.height = Math.floor(vue.height * ratio);
+            canvas.style.width = Math.floor(vue.width) + "px";
+            canvas.setAttribute("aria-label", "Page " + num);
+            conteneur.appendChild(canvas);
+            var ctx = canvas.getContext("2d");
+            return page.render({ canvasContext: ctx, viewport: vue, transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null }).promise;
+          });
+        });
+      })(n);
+    }
+  }
+
+  fetch("{{ url_document }}", { credentials: "same-origin" })
+    .then(function (r) {
+      if (r.status === 429) throw new Error("Trop de documents ouverts en peu de temps. Réessaie dans une heure.");
+      if (r.status === 404) throw new Error("Ce document est introuvable. Signale-le à l'équipe EasySchool.");
+      if (!r.ok) throw new Error("Ce document n'est pas disponible pour ton compte.");
+      return r.arrayBuffer();
+    })
+    .then(function (data) { return pdfjsLib.getDocument({ data: data }).promise; })
+    .then(function (d) { doc = d; afficher(); })
+    .catch(function (e) { etat.textContent = e.message || "Impossible d'ouvrir le document."; });
+
+  document.getElementById("zoom-plus").addEventListener("click", function () { if (doc && echelle < 3) { echelle += 0.25; afficher(); } });
+  document.getElementById("zoom-moins").addEventListener("click", function () { if (doc && echelle > 0.5) { echelle -= 0.25; afficher(); } });
+  document.addEventListener("keydown", function (e) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "p")) { e.preventDefault(); }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'dash/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="layout-content" data-scrollable>
+    <div class="container-fluid">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'programme:courses' %}">Accueil</a></li>
+            <li><a href="{% url 'programme:student_dashboard' slug %}">Tableau de bord</a></li>
+            <li class="active">Anciennes Épreuves</li>
+        </ol>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h4 class="card-title">Anciennes Épreuves pour <span class="text-info">{{ niveau.libelle }}</span></h4>
+                <p class="card-subtitle">Retrouvez toutes les épreuves passées pour vous entraîner.</p>
+            </div>
+            <div class="card-block">
+                <form id="search-form" method="GET" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" id="search-input" name="q" class="form-control" placeholder="Rechercher par titre, école, description..." value="{{ query }}">
+                        <span class="input-group-btn">
+                            <button class="btn btn-primary" type="submit"><i class="material-icons">search</i></button>
+                        </span>
+                    </div>
+                </form>
+
+                <div id="epreuves-container">
+                    {% include "dash/_epreuves_table_partial.html" %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    console.log("Script d'anciennes épreuves chargé.");
+    const searchInput = document.getElementById('search-input');
+    const epreuvesContainer = document.getElementById('epreuves-container');
+    const searchForm = document.getElementById('search-form');
+
+    let debounceTimer;
+
+    function fetchEpreuves(url) {
+        console.log("Début du fetchAJAX pour l'URL :", url);
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            console.log("Réponse AJAX reçue, statut :", response.status);
+            return response.text();
+        })
+        .then(html => {
+            console.log("HTML reçu de l'AJAX, mise à jour du DOM...");
+            epreuvesContainer.innerHTML = html;
+        })
+        .catch(error => console.error('Erreur AJAX:', error));
+    }
+
+    searchInput.addEventListener('input', function() {
+        console.log("Événement 'input' détecté :", searchInput.value);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const query = encodeURIComponent(searchInput.value.trim());
+            const url = window.location.pathname + `?q=${query}`;
+            console.log("Exécution de la recherche après debounce avec l'URL :", url);
+            fetchEpreuves(url);
+        }, 300); // 300ms debounce
+    });
+
+    searchForm.addEventListener('submit', function(e) {
+        console.log("Formulaire soumis manuellement.");
+        e.preventDefault();
+        const query = encodeURIComponent(searchInput.value.trim());
+        const url = window.location.pathname + `?q=${query}`;
+        fetchEpreuves(url);
+    });
+
+    // Make loadPage available globally for the partial template's onclick handlers
+    window.loadPage = function(event, url) {
+        console.log("Clic sur un lien de pagination :", url);
+        event.preventDefault();
+        fetchEpreuves(url);
+        return false;
+    };
+</script>
+{% endblock %}
+

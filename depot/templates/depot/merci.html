@@ -1,0 +1,27 @@
+{% extends "depot/base.html" %}
+{% block title %}Épreuve reçue — EasySchool{% endblock %}
+{% block content %}
+<section class="depot-heros"><div class="conteneur" style="padding-bottom:40px"><h1>Merci, ton épreuve est bien arrivée.</h1></div></section>
+<div class="conteneur" style="margin-top:-40px;padding-bottom:72px;position:relative">
+  <div class="feuille seyes merci" style="--marge-x:-10px">
+    <p class="gros" aria-hidden="true">+{{ epreuve.recompense }} F</p>
+    <p style="margin:12px auto 0;font-size:1.15rem"><strong>{{ epreuve.recompense }} FCFA</strong> ont été ajoutés à ton solde. Nouveau solde : <strong>{{ user.somme }} F</strong>.</p>
+    <dl class="recap">
+      <dt>Épreuve</dt><dd>{{ epreuve.titre }}</dd>
+      <dt>Classe</dt><dd>{{ epreuve.niveau.libelle }}</dd>
+      <dt>Matière</dt><dd>{{ epreuve.matiere.nom }}</dd>
+      <dt>Établissement</dt><dd>{{ epreuve.etablissement }}</dd>
+      <dt>Évaluation</dt><dd>{{ epreuve.get_type_evaluation_display }} ({{ epreuve.annee_scolaire }})</dd>
+    </dl>
+    {% if epreuve.publication %}
+      <p class="message success" style="max-width:60ch;margin:8px auto 12px">Ton épreuve est déjà en ligne dans la banque d'épreuves de {{ epreuve.niveau.libelle }} : les élèves abonnés à cette classe peuvent la consulter.</p>
+    {% endif %}
+    <p style="margin-inline:auto;color:var(--texte-doux)">Si le document n'est pas une vraie épreuve ou s'il est illisible, notre équipe le retirera de la banque et reprendra les 25 F.</p>
+    <div class="actions">
+      <a class="btn btn-tableau" href="{% url 'depot:accueil' %}"><svg class="icone" aria-hidden="true"><use href="#i-envoyer"/></svg>Envoyer une autre épreuve</a>
+      {% if epreuve.publication %}<a class="btn btn-contour" href="{% url 'programme:liste_anciennes_epreuves' epreuve.niveau.slug %}">Voir la banque d'épreuves</a>{% endif %}
+      <a class="btn btn-contour" href="{% url 'programme:level' %}">Retour à mon espace</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

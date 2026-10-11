@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Contact — EasySchool Cameroun{% endblock %}
+
+{% block content %}
+<section class="page-titre">
+  <div class="conteneur">
+    <h1>Nous contacter</h1>
+    <p>Une question sur un cours, un paiement ou ton compte ? Nous répondons en général dans la journée.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="conteneur deux-colonnes">
+    <div>
+      {% if done %}
+        <div class="message success" role="status">Merci {{ nom }}, ton message a bien été envoyé. Nous te répondrons par e-mail.</div>
+      {% else %}
+        {% if errors %}
+          <div class="erreurs-form" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+        {% endif %}
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="grille-2">
+            <div class="champ"><label for="c-nom">Nom complet</label><input id="c-nom" name="nom" type="text" required maxlength="150" autocomplete="name" value="{{ request.POST.nom|default:'' }}"></div>
+            <div class="champ"><label for="c-email">Adresse e-mail</label><input id="c-email" name="email" type="email" required maxlength="254" autocomplete="email" value="{{ request.POST.email|default:'' }}"></div>
+          </div>
+          <div class="champ"><label for="c-sujet">Sujet</label><input id="c-sujet" name="sujet" type="text" required maxlength="300" value="{{ request.POST.sujet|default:'' }}"></div>
+          <div class="champ"><label for="c-message">Message</label><textarea id="c-message" name="message" required maxlength="5000">{{ request.POST.message|default:'' }}</textarea></div>
+          <button class="btn btn-encre" type="submit">Envoyer le message</button>
+        </form>
+      {% endif %}
+    </div>
+    <aside class="encadre">
+      <h3>Autres moyens</h3>
+      <ul class="coordonnees">
+        <li><svg class="icone" aria-hidden="true"><use href="#i-whatsapp"/></svg><a href="https://wa.me/237620325046" rel="noopener" target="_blank">WhatsApp : +237 620 32 50 46</a></li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-tel"/></svg><a href="tel:+237620325046">+237 620 32 50 46</a></li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-mail"/></svg><a href="mailto:easyschoolcameroon@gmail.com">easyschoolcameroon@gmail.com</a></li>
+        <li><svg class="icone" aria-hidden="true"><use href="#i-lieu"/></svg>Douala, Cameroun</li>
+      </ul>
+    </aside>
+  </div>
+</section>
+{% endblock content %}
